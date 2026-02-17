@@ -22,7 +22,11 @@ const ClientDetails = () => {
 
     const fetchClient = async () => {
         try {
-            const { data } = await api.get(`/ca/clients/${id}`);
+            const url = user?.role === 'firms'
+                ? `/firm/clients/${id}`
+                : `/ca/clients/${id}`;
+
+            const { data } = await api.get(url);
             if (data.success) {
                 setClient(data.data);
             }

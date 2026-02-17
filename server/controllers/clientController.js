@@ -12,17 +12,44 @@ exports.getMyDeadlines = async (req, res) => {
             {
                 $lookup: {
                     from: 'documents',
-                    localField: '_id',
-                    foreignField: 'deadlineId',
+                    let: { deadlineId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$deadlineId', '$$deadlineId'] } } },
+                        { $sort: { updatedAt: -1 } }
+                    ],
                     as: 'linkedDocuments'
                 }
             },
             {
                 $addFields: {
-                    documentStatus: { $arrayElemAt: ['$linkedDocuments.status', 0] }
+                    documentStatus: { $arrayElemAt: ['$linkedDocuments.status', 0] },
+                    verifiedBy: { $arrayElemAt: ['$linkedDocuments.verifiedBy', 0] },
+                    verifiedBy_l2: { $arrayElemAt: ['$linkedDocuments.verifiedBy_l2', 0] }
                 }
             },
-            { $project: { linkedDocuments: 0 } }
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'verifiedBy',
+                    foreignField: '_id',
+                    as: 'verifier'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'verifiedBy_l2',
+                    foreignField: '_id',
+                    as: 'verifier_l2'
+                }
+            },
+            {
+                $addFields: {
+                    verifiedByName: { $arrayElemAt: ['$verifier.name', 0] },
+                    verifiedByL2Name: { $arrayElemAt: ['$verifier_l2.name', 0] }
+                }
+            },
+            { $project: { linkedDocuments: 0, verifier: 0, verifier_l2: 0 } }
         ]);
 
         res.json({

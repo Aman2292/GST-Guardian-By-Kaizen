@@ -3,8 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadDocument, getDocuments, deleteDocument, verifyDocument } = require('../controllers/documentController');
+const { uploadDocument, getDocuments, deleteDocument, verifyDocument, verifyDocumentL2 } = require('../controllers/documentController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { isFirmAdmin } = require('../middleware/roleCheck');
 
 // Configure Multer Storage
 const storage = multer.diskStorage({
@@ -31,6 +32,7 @@ router.use(authMiddleware);
 router.post('/upload', upload.single('file'), uploadDocument);
 router.get('/', getDocuments);
 router.patch('/:id/verify', verifyDocument);
+router.patch('/:id/verify-l2', isFirmAdmin, verifyDocumentL2);
 router.delete('/:id', deleteDocument);
 
 module.exports = router;

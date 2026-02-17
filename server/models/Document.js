@@ -64,9 +64,11 @@ const DocumentSchema = new mongoose.Schema({
 
     deadlineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Deadline' },
 
-    status: { type: String, enum: ['uploaded', 'processing', 'processed', 'flagged', 'rejected', 'verified_l1'], default: 'uploaded' },
+    status: { type: String, enum: ['uploaded', 'processing', 'processed', 'flagged', 'rejected', 'verified_l1', 'verified_l2'], default: 'uploaded' },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: Date,
+    verifiedBy_l2: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    verifiedAt_l2: Date,
 
     uploadedAt: { type: Date, default: Date.now },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaPhone, FaUserTie } from 'react-icons/fa';
 
 const CAList = ({ cas }) => {
+    const navigate = useNavigate();
+
     if (!cas || cas.length === 0) {
         return (
             <div className="text-center py-10 bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
@@ -13,39 +16,46 @@ const CAList = ({ cas }) => {
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="text-sm text-neutral-500 border-b border-neutral-100">
-                        <th className="py-3 px-4 font-medium">Name</th>
-                        <th className="py-3 px-4 font-medium">Contact</th>
-                        <th className="py-3 px-4 font-medium">Role</th>
-                        <th className="py-3 px-4 font-medium">Status</th>
+                    <tr className="text-sm text-neutral-500 border-b border-neutral-100 uppercase tracking-widest text-[10px]">
+                        <th className="py-3 px-4 font-bold">Name</th>
+                        <th className="py-3 px-4 font-bold">Contact</th>
+                        <th className="py-3 px-4 font-bold">Role</th>
+                        <th className="py-3 px-4 font-bold">Status</th>
                     </tr>
                 </thead>
                 <tbody className="text-sm">
                     {cas.map((ca) => (
-                        <tr key={ca._id} className="border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors">
+                        <tr
+                            key={ca._id}
+                            className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer group"
+                            onClick={() => navigate(`/firm/cas/${ca._id}`)}
+                        >
                             <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold">
+                                    <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-bold group-hover:scale-110 transition-transform">
                                         {ca.name.charAt(0)}
                                     </div>
-                                    <span className="font-medium text-neutral-900">{ca.name}</span>
+                                    <span className="font-bold text-neutral-900 group-hover:text-primary-600 transition-colors">{ca.name}</span>
                                 </div>
                             </td>
                             <td className="py-3 px-4">
-                                <div className="flex flex-col text-xs text-neutral-500">
-                                    <span className="flex items-center gap-1"><FaEnvelope size={10} /> {ca.email}</span>
-                                    {ca.phone && <span className="flex items-center gap-1"><FaPhone size={10} /> {ca.phone}</span>}
+                                <div className="flex flex-col text-xs text-neutral-500 group-hover:text-neutral-700 transition-colors">
+                                    <span className="flex items-center gap-1 font-medium"><FaEnvelope size={10} className="text-neutral-300" /> {ca.email}</span>
+                                    {ca.phone && <span className="flex items-center gap-1 font-medium"><FaPhone size={10} className="text-neutral-300" /> {ca.phone}</span>}
                                 </div>
                             </td>
                             <td className="py-3 px-4">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${ca.caProfile?.isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                <span className={clsx(
+                                    "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight",
+                                    ca.caProfile?.isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                                )}>
                                     <FaUserTie size={10} />
-                                    {ca.caProfile?.isAdmin ? 'Admin' : 'Associate'}
+                                    {ca.caProfile?.isAdmin ? 'Senior' : 'Associate'}
                                 </span>
                             </td>
                             <td className="py-3 px-4">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ca.isActive ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                                    {ca.isActive ? 'Active' : 'Inactive'}
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ca.isActive ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                                    {ca.isActive ? 'Active' : 'Offline'}
                                 </span>
                             </td>
                         </tr>
@@ -55,5 +65,8 @@ const CAList = ({ cas }) => {
         </div>
     );
 };
+
+// Add clsx import or just use template literals if clsx is not available in small components
+const clsx = (...classes) => classes.filter(Boolean).join(' ');
 
 export default CAList;

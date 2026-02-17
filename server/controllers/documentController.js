@@ -126,6 +126,37 @@ exports.verifyDocument = async (req, res) => {
     }
 };
 
+// @desc    Verify Document (L2 - Firm level)
+// @route   PATCH /api/documents/:id/verify-l2
+exports.verifyDocumentL2 = async (req, res) => {
+    try {
+        const document = await Document.findById(req.params.id);
+
+        if (!document) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        if (document.firmId.toString() !== req.user.firmId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        if (document.status !== 'verified_l1') {
+            return res.status(400).json({ success: false, message: 'Document must be CA-verified (L1) first' });
+        }
+
+        document.status = 'verified_l2';
+        document.verifiedBy_l2 = req.user.userId;
+        document.verifiedAt_l2 = Date.now();
+
+        await document.save();
+
+        res.json({ success: true, data: document, message: 'Document Fully Verified (Level 2)' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @desc    Get Documents
 // @route   GET /api/documents
 exports.getDocuments = async (req, res) => {
@@ -145,6 +176,7 @@ exports.getDocuments = async (req, res) => {
         const documents = await Document.find(query)
             .populate('uploadedBy', 'name role')
             .populate('verifiedBy', 'name')
+            .populate('verifiedBy_l2', 'name')
             .populate('clientId', 'name clientProfile.businessName')
             .sort({ createdAt: -1 });
 

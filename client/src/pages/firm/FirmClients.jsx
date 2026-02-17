@@ -8,6 +8,7 @@ import { FaUsers, FaUserTie, FaSearch } from 'react-icons/fa';
 import clsx from 'clsx';
 
 const FirmClients = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [clients, setClients] = useState([]);
     const [cas, setCas] = useState([]);

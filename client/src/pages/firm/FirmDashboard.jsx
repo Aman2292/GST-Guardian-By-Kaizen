@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import Sidebar from '../../components/shared/Sidebar';
 import CAList from '../../components/firm/CAList';
 import AssignCAModal from '../../components/firm/AssignCAModal';
 import api from '../../services/api';
-import { FaUserPlus, FaUsers, FaChartPie, FaCalendarAlt, FaUserTie } from 'react-icons/fa';
+import { FaUserPlus, FaUsers, FaChartPie, FaCalendarAlt, FaUserTie, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
+import DocumentList from '../../components/shared/DocumentList';
 import clsx from 'clsx';
 
 const FirmDashboard = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
 
     // Data States
-    const [stats, setStats] = useState({ caCount: 0, clientCount: 0, pendingDeadlines: 0 });
+    const [stats, setStats] = useState({ caCount: 0, clientCount: 0, pendingDeadlines: 0, pendingFinalApproval: 0 });
     const [cas, setCas] = useState([]);
     const [deadlines, setDeadlines] = useState([]);
+    const [verificationQueue, setVerificationQueue] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
@@ -32,6 +36,13 @@ const FirmDashboard = () => {
                 const deadlinesRes = await api.get('/firm/deadlines');
                 if (deadlinesRes.data.success) setDeadlines(deadlinesRes.data.data);
             }
+            else if (activeTab === 'verification') {
+                const docsRes = await api.get('/documents'); // Reuse getDocuments to show pending for firm
+                // We'll filter for verified_l1 on frontend or add a query param
+                if (docsRes.data.success) {
+                    setVerificationQueue(docsRes.data.data.filter(d => d.status === 'verified_l1'));
+                }
+            }
 
         } catch (error) {
             console.error("Error fetching data firm:", error);
@@ -46,6 +57,7 @@ const FirmDashboard = () => {
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: FaChartPie },
+        { id: 'verification', label: 'Verification Queue', icon: FaCheckCircle },
         { id: 'deadlines', label: 'All Deadlines', icon: FaCalendarAlt },
     ];
 
@@ -96,26 +108,33 @@ const FirmDashboard = () => {
                                 {/* OVERVIEW TAB */}
                                 {activeTab === 'overview' && (
                                     <div className="space-y-8 animate-fade-in">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
-                                                <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Total CAs</h3>
-                                                <div className="flex items-end justify-between">
-                                                    <p className="text-4xl font-bold font-heading text-neutral-900">{stats.caCount}</p>
-                                                    <span className="text-primary-500 text-xs font-medium bg-primary-50 px-2 py-1 rounded-full">Active Staff</span>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover text-center">
+                                                <h3 className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">Total Staff</h3>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <p className="text-4xl font-black font-heading text-neutral-900 leading-none">{stats.caCount}</p>
+                                                    <span className="text-[9px] font-bold text-primary-500 uppercase">Active CAs</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
-                                                <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Total Clients</h3>
-                                                <div className="flex items-end justify-between">
-                                                    <p className="text-4xl font-bold font-heading text-neutral-900">{stats.clientCount}</p>
-                                                    <span className="text-success-500 text-xs font-medium bg-success-50 px-2 py-1 rounded-full">Onboarded</span>
+                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover text-center">
+                                                <h3 className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">Clients</h3>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <p className="text-4xl font-black font-heading text-neutral-900 leading-none">{stats.clientCount}</p>
+                                                    <span className="text-[9px] font-bold text-success-500 uppercase">Total Base</span>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
-                                                <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Pending Deadlines</h3>
-                                                <div className="flex items-end justify-between">
-                                                    <p className="text-4xl font-bold font-heading text-neutral-900">{stats.pendingDeadlines}</p>
-                                                    <span className="text-warning-600 text-xs font-medium bg-warning-50 px-2 py-1 rounded-full">Across Firm</span>
+                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover text-center">
+                                                <h3 className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">Pending Docs</h3>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <p className="text-4xl font-black font-heading text-neutral-900 leading-none">{stats.pendingFinalApproval}</p>
+                                                    <span className="text-[9px] font-bold text-indigo-500 uppercase">Awaiting Sign-off</span>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover text-center">
+                                                <h3 className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">Deadlines</h3>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <p className="text-4xl font-black font-heading text-neutral-900 leading-none">{stats.pendingDeadlines}</p>
+                                                    <span className="text-[9px] font-bold text-danger-500 uppercase">Firm Wide</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -129,6 +148,22 @@ const FirmDashboard = () => {
                                             </div>
                                             <CAList cas={cas} />
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* VERIFICATION QUEUE TAB */}
+                                {activeTab === 'verification' && (
+                                    <div className="space-y-6 animate-fade-in">
+                                        <div className="bg-primary-50 p-4 rounded-xl border border-primary-100 flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white shadow-lg">
+                                                <FaShieldAlt />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-primary-900 uppercase tracking-wider">Final Approval Queue</h4>
+                                                <p className="text-xs text-primary-600 font-medium">These documents have been verified by CAs and require your final Partner sign-off for compliance.</p>
+                                            </div>
+                                        </div>
+                                        <DocumentList statusFilter="verified_l1" />
                                     </div>
                                 )}
 
@@ -149,10 +184,15 @@ const FirmDashboard = () => {
                                                 {deadlines.map(deadline => {
                                                     const isOverdue = new Date(deadline.dueDate) < new Date() && deadline.status !== 'filed';
                                                     return (
-                                                        <tr key={deadline._id} className="hover:bg-neutral-50 transition">
-                                                            <td className="p-4 font-medium text-neutral-800">{deadline.type}</td>
+                                                        <tr
+                                                            key={deadline._id}
+                                                            className="hover:bg-neutral-50 transition cursor-pointer group"
+                                                            onClick={() => navigate(`/firm/clients/${deadline.clientId?._id}`)}
+                                                        >
+                                                            <td className="p-4 font-medium text-neutral-800 group-hover:text-primary-600 transition-colors uppercase tracking-tight">{deadline.type}</td>
                                                             <td className="p-4">
-                                                                <div className="text-sm font-medium">{deadline.clientId?.clientProfile?.businessName || 'Unknown'}</div>
+                                                                <div className="text-sm font-bold text-neutral-900 group-hover:text-primary-600 transition-colors">{deadline.clientId?.clientProfile?.businessName || 'Unknown'}</div>
+                                                                <div className="text-[10px] text-neutral-400 font-mono mt-0.5 uppercase">{deadline.clientId?.clientProfile?.gstin}</div>
                                                             </td>
                                                             <td className={clsx("p-4 font-mono text-sm", isOverdue ? "text-danger-600 font-bold" : "text-neutral-600")}>
                                                                 {new Date(deadline.dueDate).toLocaleDateString()}
@@ -165,7 +205,7 @@ const FirmDashboard = () => {
                                                                     {deadline.status}
                                                                 </span>
                                                             </td>
-                                                            <td className="p-4 text-xs text-neutral-500">
+                                                            <td className="p-4 text-xs text-neutral-500 font-bold">
                                                                 {deadline.clientId?.clientProfile?.assignedCAId?.name || '-'}
                                                             </td>
                                                         </tr>

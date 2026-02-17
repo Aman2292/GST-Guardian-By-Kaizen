@@ -25,12 +25,19 @@ exports.getFirmStats = async (req, res) => {
             status: 'Pending'
         });
 
+        // Count Documents Pending Final Approval (verified_l1)
+        const pendingFinalApproval = await Document.countDocuments({
+            firmId,
+            status: 'verified_l1'
+        });
+
         res.json({
             success: true,
             data: {
                 caCount,
                 clientCount,
-                pendingDeadlines
+                pendingDeadlines,
+                pendingFinalApproval
             }
         });
 
@@ -158,6 +165,56 @@ exports.getFirmDeadlines = async (req, res) => {
             .sort({ dueDate: 1 });
 
         res.json({ success: true, data: deadlines });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get Single CA Details & Assigned Clients
+// @route   GET /api/firm/cas/:caId
+exports.getCA = async (req, res) => {
+    try {
+        const firmId = req.user.firmId;
+        const { caId } = req.params;
+
+        const ca = await User.findOne({ _id: caId, firmId, role: 'ca' })
+            .select('name email phone caProfile lastLogin isActive');
+
+        if (!ca) {
+            return res.status(404).json({ success: false, message: 'CA not found' });
+        }
+
+        // Fetch clients assigned to this CA
+        const assignedClients = await User.find({
+            firmId,
+            role: 'client',
+            'clientProfile.assignedCAId': caId
+        }).select('name clientProfile.businessName clientProfile.gstin');
+
+        res.json({ success: true, data: { ...ca.toObject(), assignedClients } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get Single Client Details (Firm View)
+// @route   GET /api/firm/clients/:clientId
+exports.getFirmClient = async (req, res) => {
+    try {
+        const firmId = req.user.firmId;
+        const { clientId } = req.params;
+
+        const client = await User.findOne({ _id: clientId, firmId, role: 'client' })
+            .select('-password')
+            .populate('clientProfile.assignedCAId', 'name email');
+
+        if (!client) {
+            return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+
+        res.json({ success: true, data: client });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Server Error' });

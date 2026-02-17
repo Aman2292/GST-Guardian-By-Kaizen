@@ -8,7 +8,7 @@ import {
 import clsx from 'clsx';
 import useAuth from '../../hooks/useAuth';
 
-const DocumentList = ({ clientId, refreshTrigger }) => {
+const DocumentList = ({ clientId, statusFilter, refreshTrigger }) => {
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [previewDoc, setPreviewDoc] = useState(null);
@@ -17,11 +17,21 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
     const fetchDocuments = async () => {
         try {
             let url = '/documents';
-            if (clientId) url += `?clientId=${clientId}`;
+            const params = new URLSearchParams();
+            if (clientId) params.append('clientId', clientId);
+            if (statusFilter) params.append('status', statusFilter);
+
+            const queryString = params.toString();
+            if (queryString) url += `?${queryString}`;
 
             const { data } = await api.get(url);
             if (data.success) {
-                setDocuments(data.data);
+                // If we want to filter on client side as fallback or for multi-select
+                let filtered = data.data;
+                if (statusFilter) {
+                    filtered = filtered.filter(d => d.status === statusFilter);
+                }
+                setDocuments(filtered);
             }
         } catch (err) {
             console.error(err);
@@ -55,8 +65,8 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
         let label = status;
 
         if (status === 'processed') {
-            styles = 'bg-blue-50 text-blue-700 border border-blue-100';
-            label = 'AI Audited';
+            styles = 'bg-primary-50 text-primary-700 border border-primary-100';
+            label = 'Verification Pending';
         } else if (status === 'processing') {
             styles = 'bg-warning-50 text-warning-700 border border-warning-200 animate-pulse';
             label = 'AI Processing';
@@ -64,8 +74,11 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
             styles = 'bg-danger-50 text-danger-700 border border-danger-200';
             label = 'Review Required';
         } else if (status === 'verified_l1') {
-            styles = 'bg-primary-50 text-primary-700 border border-primary-200';
-            label = 'Verification Pending';
+            styles = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+            label = 'CA Verified';
+        } else if (status === 'verified_l2') {
+            styles = 'bg-success-50 text-success-700 border border-success-200';
+            label = 'Fully Verified';
         } else if (status === 'uploaded') {
             label = 'Queued';
         }
@@ -75,6 +88,18 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
                 {label}
             </span>
         );
+    };
+
+    const handleVerifyL2 = async (id) => {
+        try {
+            const { data } = await api.patch(`/documents/${id}/verify-l2`);
+            if (data.success) {
+                setDocuments(documents.map(d => d._id === id ? { ...d, status: 'verified_l2' } : d));
+                setPreviewDoc(null);
+            }
+        } catch (err) {
+            alert('L2 Verification failed');
+        }
     };
 
     const handleVerify = async (id) => {
@@ -118,11 +143,16 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
                                         <span className="bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200">{doc.category || 'Unclassified'}</span>
                                         {getStatusBadge(doc.status)}
                                         {doc.status === 'verified_l1' && doc.verifiedBy && (
-                                            <span className="text-success-600 font-bold flex items-center gap-1">
-                                                <FaCheckCircle size={8} /> By {doc.verifiedBy.name}
+                                            <span className="text-primary-600 font-bold flex items-center gap-1">
+                                                <FaCheckCircle size={8} /> CA: {doc.verifiedBy.name}
                                             </span>
                                         )}
-                                        {doc.riskLevel === 'high' && doc.status !== 'verified_l1' && (
+                                        {doc.status === 'verified_l2' && doc.verifiedBy_l2 && (
+                                            <span className="text-success-600 font-bold flex items-center gap-1">
+                                                <FaCheckCircle size={8} /> Firm: {doc.verifiedBy_l2.name}
+                                            </span>
+                                        )}
+                                        {doc.riskLevel === 'high' && !doc.status.startsWith('verified') && (
                                             <span className="bg-danger-100 text-danger-700 px-1.5 py-0.5 rounded border border-danger-200 flex items-center gap-1">
                                                 <FaExclamationTriangle size={8} /> High Risk
                                             </span>
@@ -345,12 +375,20 @@ const DocumentList = ({ clientId, refreshTrigger }) => {
                                 >
                                     Dismiss
                                 </button>
-                                {previewDoc.status !== 'verified_l1' && (user?.role === 'ca' || user?.role === 'firms') && (
+                                {previewDoc.status === 'processed' && (user?.role === 'ca' || user?.role === 'firms') && (
                                     <button
                                         onClick={() => handleVerify(previewDoc._id)}
                                         className="px-8 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-500/20 flex items-center gap-2"
                                     >
-                                        <FaCheckCircle /> Approve & Verify
+                                        <FaCheckCircle /> Approve (CA Review)
+                                    </button>
+                                )}
+                                {previewDoc.status === 'verified_l1' && user?.role === 'firms' && (
+                                    <button
+                                        onClick={() => handleVerifyL2(previewDoc._id)}
+                                        className="px-8 py-2.5 bg-success-600 text-white rounded-xl text-sm font-bold hover:bg-success-700 transition shadow-lg shadow-success-500/20 flex items-center gap-2"
+                                    >
+                                        <FaCheckCircle /> Final Approval (Partner)
                                     </button>
                                 )}
                             </div>

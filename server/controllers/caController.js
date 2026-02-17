@@ -197,14 +197,12 @@ exports.getDashboardStats = async (req, res) => {
         }
         const pendingDeadlines = await Deadline.countDocuments(deadlineQuery);
 
-        // Documents Pending Final Verification (verified_l1)
-        let docQuery = { firmId, status: 'verified_l1' };
-        // We filter docs similarly? Document model has clientId but not necessarily caId unless we add it.
-        // For now, firm wide for CA/Admin
+        // Documents Pending CA Verification (processed)
+        let docQuery = { firmId, status: 'processed' };
         const pendingVerification = await Document.countDocuments(docQuery);
 
-        // Documents AI Audited (processed)
-        const aiAudited = await Document.countDocuments({ firmId, status: 'processed' });
+        // Documents already Verified (verified_l1)
+        const verifiedCount = await Document.countDocuments({ firmId, status: 'verified_l1' });
 
         res.json({
             success: true,
@@ -212,7 +210,8 @@ exports.getDashboardStats = async (req, res) => {
                 clientCount,
                 pendingDeadlines,
                 pendingVerification,
-                aiAudited
+                verifiedCount,
+                aiAudited: pendingVerification
             }
         });
     } catch (err) {

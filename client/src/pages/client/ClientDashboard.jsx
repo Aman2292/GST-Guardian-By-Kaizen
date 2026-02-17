@@ -117,24 +117,40 @@ const ClientDashboard = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-5">
-                                                        <span className={clsx(
-                                                            "px-3 py-1 rounded-full text-[10px] uppercase font-extrabold tracking-wider border",
-                                                            deadline.status === 'filed'
-                                                                ? "bg-success-50 text-success-700 border-success-100"
-                                                                : deadline.documentStatus === 'verified_l1'
-                                                                    ? "bg-primary-50 text-primary-700 border-primary-200"
-                                                                    : deadline.documentStatus
-                                                                        ? "bg-warning-50 text-warning-700 border-warning-100" // Verification Pending
-                                                                        : "bg-neutral-50 text-neutral-500 border-neutral-100" // Draft Pending
-                                                        )}>
-                                                            {deadline.status === 'filed'
-                                                                ? 'Completed'
-                                                                : deadline.documentStatus === 'verified_l1'
-                                                                    ? 'Verified (L1)'
-                                                                    : deadline.documentStatus
-                                                                        ? 'Verification Pending'
-                                                                        : 'Draft Pending'}
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={clsx(
+                                                                "px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide border w-fit",
+                                                                deadline.status === 'filed'
+                                                                    ? "bg-success-50 text-success-700 border-success-100"
+                                                                    : deadline.documentStatus === 'verified_l2'
+                                                                        ? "bg-success-50 text-success-700 border-success-200"
+                                                                        : deadline.documentStatus === 'verified_l1'
+                                                                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                                                            : deadline.documentStatus
+                                                                                ? "bg-primary-50 text-primary-700 border-primary-100"
+                                                                                : "bg-neutral-50 text-neutral-500 border-neutral-100"
+                                                            )}>
+                                                                {deadline.status === 'filed'
+                                                                    ? 'Completed'
+                                                                    : deadline.documentStatus === 'verified_l2'
+                                                                        ? 'Fully Verified'
+                                                                        : deadline.documentStatus === 'verified_l1'
+                                                                            ? 'CA Verified'
+                                                                            : deadline.documentStatus
+                                                                                ? 'Verification Pending'
+                                                                                : 'Draft Pending'}
+                                                            </span>
+                                                            {deadline.documentStatus === 'verified_l1' && deadline.verifiedByName && (
+                                                                <span className="text-[9px] text-indigo-600 font-bold flex items-center gap-1">
+                                                                    <FaCheckCircle size={8} /> CA: {deadline.verifiedByName}
+                                                                </span>
+                                                            )}
+                                                            {deadline.documentStatus === 'verified_l2' && deadline.verifiedByL2Name && (
+                                                                <span className="text-[9px] text-success-600 font-bold flex items-center gap-1">
+                                                                    <FaCheckCircle size={8} /> Firm: {deadline.verifiedByL2Name}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-5">
                                                         {deadline.status !== 'filed' ? (

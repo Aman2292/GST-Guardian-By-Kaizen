@@ -5,6 +5,7 @@ import DeadlineList from '../../components/ca/DeadlineList';
 import DocumentList from '../../components/shared/DocumentList';
 import DocumentUpload from '../../components/shared/DocumentUpload';
 import api from '../../services/api';
+import useAuth from '../../hooks/useAuth';
 import {
     FaArrowLeft, FaUser, FaBuilding, FaPhone, FaEnvelope,
     FaFileContract, FaCalendarCheck, FaEdit, FaShieldAlt,
@@ -13,6 +14,7 @@ import {
 import clsx from 'clsx';
 
 const ClientDetails = () => {
+    const { user } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const [client, setClient] = useState(null);
@@ -38,8 +40,10 @@ const ClientDetails = () => {
     };
 
     useEffect(() => {
-        fetchClient();
-    }, [id]);
+        if (user) {
+            fetchClient();
+        }
+    }, [id, user]);
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-surface-page font-body">Loading...</div>;
     if (!client) return <div className="min-h-screen flex items-center justify-center bg-surface-page font-body text-danger-600">Client not found</div>;

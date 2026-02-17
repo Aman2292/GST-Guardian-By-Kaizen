@@ -1,0 +1,119 @@
+const User = require('../models/User');
+const Deadline = require('../models/Deadline');
+const bcrypt = require('bcryptjs');
+const { generateDeadlinesForClient } = require('../services/deadlineService');
+
+// @desc    Add a new Client
+// @route   POST /api/ca/clients
+exports.addClient = async (req, res) => {
+    const { name, email, phone, businessName, gstin, businessType, address, pan } = req.body;
+
+    try {
+        // 1. Check if user exists
+        let client = await User.findOne({ email });
+        if (client) {
+            return res.status(400).json({ success: false, message: 'User with this email already exists' });
+        }
+
+        // 2. Create Client User
+        // Default password for now (in real app, send invite)
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('client123', salt);
+
+        client = await User.create({
+            firmId: req.user.firmId,
+            name,
+            email,
+            password: hashedPassword,
+            role: 'client',
+            phone,
+            clientProfile: {
+                assignedCAId: req.user.userId,
+                businessName,
+                gstin,
+                businessType,
+                pan,
+                address,
+                onboardedAt: Date.now()
+            }
+        });
+
+        // 3. Update CA's client count
+        await User.findByIdAndUpdate(req.user.userId, { $inc: { 'caProfile.clientCount': 1 } });
+
+        // 4. Generate Deadlines
+        await generateDeadlinesForClient(client);
+
+        res.status(201).json({ success: true, data: client, message: 'Client added and deadlines generated' });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};
+
+// @desc    Get all clients for a CA
+// @route   GET /api/ca/clients
+exports.getClients = async (req, res) => {
+    try {
+        let query = { firmId: req.user.firmId, role: 'client' };
+
+        // If not admin, only show assumed clients
+        if (!req.user.isAdmin) {
+            query['clientProfile.assignedCAId'] = req.user.userId;
+        }
+
+        const clients = await User.find(query).select('-password');
+        res.json({ success: true, count: clients.length, data: clients });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get Deadlines
+// @route   GET /api/ca/deadlines
+exports.getDeadlines = async (req, res) => {
+    try {
+        let query = { firmId: req.user.firmId };
+
+        // If not admin, only show own clients' deadlines
+        if (!req.user.isAdmin) {
+            query.caId = req.user.userId;
+        }
+
+        const deadlines = await Deadline.find(query)
+            .populate('clientId', 'name clientProfile.businessName')
+            .sort({ dueDate: 1 }); // Ascending order
+
+        res.json({ success: true, count: deadlines.length, data: deadlines });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Mark Deadline as Filed
+// @route   PATCH /api/ca/deadlines/:id/file
+exports.markAsFiled = async (req, res) => {
+    try {
+        const deadline = await Deadline.findById(req.params.id);
+
+        if (!deadline) {
+            return res.status(404).json({ success: false, message: 'Deadline not found' });
+        }
+
+        // Verify ownership/firm
+        if (deadline.firmId.toString() !== req.user.firmId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        deadline.status = 'filed';
+        deadline.filedAt = Date.now();
+        deadline.filedBy = req.user.userId;
+
+        await deadline.save();
+
+        res.json({ success: true, data: deadline });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

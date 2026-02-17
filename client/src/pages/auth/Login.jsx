@@ -14,8 +14,6 @@ const Login = () => {
         setError('');
         const result = await login(email, password);
         if (result.success) {
-            // Redirect based on role (handled in App.jsx or here)
-            // For now, simple redirect
             navigate('/dashboard');
         } else {
             setError(result.message);
@@ -23,47 +21,58 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="max-w-md w-full bg-surface p-8 rounded-lg shadow-lg border border-gray-800">
-                <h2 className="text-3xl font-bold text-white mb-6 text-center">CA Command Center</h2>
-                <h3 className="text-xl text-gray-400 mb-6 text-center">Sign In</h3>
+        <div className="min-h-screen flex items-center justify-center bg-surface-page p-4">
+            <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-neutral-100">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold font-heading text-neutral-900 mb-2">Welcome Back</h2>
+                    <p className="text-neutral-500">Sign in as <b>CA</b> or <b>Client</b></p>
+                </div>
 
-                {error && <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded mb-4">{error}</div>}
+                {error && (
+                    <div className="bg-danger-50 border border-danger-500/20 text-danger-700 p-3 rounded-lg mb-6 flex items-center gap-2 text-sm">
+                        <span>⚠️</span> {error}
+                    </div>
+                )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">Email Address</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-background border border-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-primary focus:outline-none"
+                            className="input-field"
+                            placeholder="name@firm.com"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-background border border-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-primary focus:outline-none"
+                            className="input-field"
+                            placeholder="••••••••"
                             required
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full bg-primary text-background font-bold py-2 px-4 rounded hover:bg-cyan-400 transition duration-200"
+                        className="w-full btn-primary py-3 text-base shadow-lg shadow-primary-500/30"
                     >
-                        Login
+                        Sign In
                     </button>
                 </form>
 
-                <div className="mt-4 text-center">
-                    <Link to="/register-firm" className="text-sm text-primary hover:underline">
-                        Register new CA Firm
-                    </Link>
+                <div className="mt-8 text-center border-t border-neutral-100 pt-6">
+                    <p className="text-sm text-neutral-500">
+                        Don't have an account?{' '}
+                        <Link to="/register-firm" className="text-primary-600 font-semibold hover:text-primary-700 hover:underline">
+                            Register Firm
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>

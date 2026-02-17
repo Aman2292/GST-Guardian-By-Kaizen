@@ -5,6 +5,7 @@ import RegisterFirm from './pages/auth/RegisterFirm';
 import AcceptInvite from './pages/auth/AcceptInvite';
 import FirmDashboard from './pages/firm/FirmDashboard';
 import CADashboard from './pages/ca/CADashboard';
+import ClientDetails from './pages/ca/ClientDetails';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import useAuth from './hooks/useAuth';
 
@@ -24,11 +25,13 @@ function App() {
             <Route path="/dashboard" element={<NavigateResolver />} />
           </Route>
 
+          <Route element={<ProtectedRoute allowedRoles={['firms']} />}>
+            <Route path="/firm/dashboard" element={<FirmDashboard />} />
+          </Route>
+
           <Route element={<ProtectedRoute allowedRoles={['ca']} />}>
-            {/* CA Specific Routes */}
-            {/* If role is 'ca' but isAdmin is true, they might access Firm Dashboard */}
-            <Route path="/firm/dashboard" element={<FirmDashboardWrapper />} />
             <Route path="/ca/dashboard" element={<CADashboard />} />
+            <Route path="/ca/clients/:id" element={<ClientDetails />} />
           </Route>
 
           {/* Fallback */}
@@ -39,20 +42,15 @@ function App() {
   );
 }
 
+import ClientDashboard from './pages/client/ClientDashboard';
+
 // Helper to redirect based on role
 const NavigateResolver = () => {
   const { user } = useAuth();
-  if (user?.role === 'ca' && user?.isAdmin) return <Navigate to="/firm/dashboard" replace />;
+  if (user?.role === 'firms') return <Navigate to="/firm/dashboard" replace />;
   if (user?.role === 'ca') return <Navigate to="/ca/dashboard" replace />;
-  if (user?.role === 'client') return <div className="p-8 text-white">Client Portal Coming Soon</div>;
+  if (user?.role === 'client') return <ClientDashboard />;
   return <Navigate to="/login" replace />;
-};
-
-const FirmDashboardWrapper = () => {
-  const { user } = useAuth();
-  // Double check admin status
-  if (!user?.isAdmin) return <Navigate to="/unauthorized" replace />;
-  return <FirmDashboard />;
 };
 
 export default App;

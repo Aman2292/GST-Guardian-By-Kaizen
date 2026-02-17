@@ -21,6 +21,11 @@ connectDB();
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/ca', require('./routes/ca'));
+app.use('/api/documents', require('./routes/document'));
+app.use('/api/firm', require('./routes/firm'));
+
+// Make uploads folder static
+app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 5000;
 

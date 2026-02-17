@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import clsx from 'clsx';
-import { FaCheck } from 'react-icons/fa';
+import { FaCheckCircle, FaClock } from 'react-icons/fa';
 
 const DeadlineList = () => {
     const [deadlines, setDeadlines] = useState([]);
@@ -24,12 +24,10 @@ const DeadlineList = () => {
         try {
             const { data } = await api.patch(`/ca/deadlines/${id}/file`);
             if (data.success) {
-                // Update local state
                 setDeadlines(deadlines.map(d => d._id === id ? { ...d, status: 'filed' } : d));
             }
         } catch (err) {
             console.error(err);
-            alert('Failed to mark as filed');
         }
     };
 
@@ -37,54 +35,83 @@ const DeadlineList = () => {
         fetchDeadlines();
     }, []);
 
-    const getStatusColor = (dueDate, status) => {
-        if (status === 'filed') return 'text-green-500 border-green-500/30 bg-green-500/10';
+    const getStatusStyles = (dueDate, status) => {
+        if (status === 'filed') return {
+            badge: 'bg-success-50 text-success-700 border-success-200',
+            border: 'border-l-4 border-l-success-500'
+        };
 
         const daysLeft = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
-        if (daysLeft < 0) return 'text-red-500 border-red-500/30 bg-red-500/10'; // Overdue
-        if (daysLeft <= 3) return 'text-red-400 border-red-400/30 bg-red-400/10'; // Critical
-        if (daysLeft <= 7) return 'text-warning border-warning/30 bg-warning/10'; // Warning
-        return 'text-blue-400 border-blue-400/30 bg-blue-400/10'; // Safe
+
+        if (daysLeft < 0) return {
+            badge: 'bg-danger-50 text-danger-700 border-danger-200',
+            border: 'border-l-4 border-l-danger-500'
+        };
+
+        if (daysLeft <= 3) return {
+            badge: 'bg-danger-50 text-danger-700 border-danger-200',
+            border: 'border-l-4 border-l-danger-400'
+        };
+
+        if (daysLeft <= 7) return {
+            badge: 'bg-warning-50 text-warning-700 border-warning-200',
+            border: 'border-l-4 border-l-warning-400'
+        };
+
+        return {
+            badge: 'bg-primary-50 text-primary-700 border-primary-200',
+            border: 'border-l-4 border-l-primary-400'
+        };
     };
 
-    if (loading) return <div className="p-4 text-gray-400 text-sm">Loading deadlines...</div>;
+    if (loading) return <div className="p-4 text-center text-neutral-400 text-sm">Checking calendars...</div>;
 
     return (
-        <div className="bg-surface rounded-lg border border-gray-800 flex flex-col h-full">
-            <div className="p-6 border-b border-gray-800">
-                <h2 className="text-xl font-bold text-white">Upcoming Compliance</h2>
-            </div>
-            <div className="overflow-y-auto max-h-[400px] p-4 space-y-3">
-                {deadlines.length === 0 ? (
-                    <div className="text-center text-gray-500 py-4">No upcoming deadlines</div>
-                ) : (
-                    deadlines.map(d => (
-                        <div key={d._id} className="flex justify-between items-center p-3 rounded bg-background border border-gray-700">
+        <div className="space-y-4">
+            {deadlines.length === 0 ? (
+                <div className="text-center p-8 bg-white rounded-xl border border-neutral-100 text-neutral-500">
+                    <p>No upcoming deadlines</p>
+                </div>
+            ) : (
+                deadlines.slice(0, 5).map(d => {
+                    const styles = getStatusStyles(d.dueDate, d.status);
+                    const daysLeft = Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+                    return (
+                        <div key={d._id} className={clsx("bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex justify-between items-start transition hover:shadow-md", styles.border)}>
                             <div>
-                                <div className="font-bold text-white text-sm">{d.type} <span className="text-xs font-normal text-gray-400">({new Date(d.dueDate).toLocaleDateString()})</span></div>
-                                <div className="text-xs text-gray-500">{d.clientId?.clientProfile?.businessName || 'Unknown Client'}</div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-bold text-neutral-800 text-sm">{d.type}</h4>
+                                    <span className={clsx("px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full border", styles.badge)}>
+                                        {d.status === 'filed' ? 'Filed' : (daysLeft < 0 ? 'Overdue' : `${daysLeft} Days Left`)}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-neutral-500 font-medium">{d.clientId?.clientProfile?.businessName}</p>
+                                <div className="flex items-center gap-1.5 mt-2 text-xs text-neutral-400">
+                                    <FaClock className="text-neutral-300" />
+                                    <span>Due: {new Date(d.dueDate).toLocaleDateString()}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className={clsx("px-2 py-1 text-xs rounded border", getStatusColor(d.dueDate, d.status))}>
-                                    {d.status === 'filed' ? 'Filed' : (
-                                        Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24)) < 0 ? 'Overdue' :
-                                            `${Math.ceil((new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} days`
-                                    )}
-                                </span>
-                                {d.status !== 'filed' && (
-                                    <button
-                                        onClick={() => markFiled(d._id)}
-                                        className="p-1.5 rounded bg-green-500/10 text-green-500 hover:bg-green-500/20"
-                                        title="Mark as Filed"
-                                    >
-                                        <FaCheck size={12} />
-                                    </button>
-                                )}
-                            </div>
+
+                            {d.status !== 'filed' && (
+                                <button
+                                    onClick={() => markFiled(d._id)}
+                                    className="text-neutral-300 hover:text-success-600 transition p-1 hover:bg-success-50 rounded-full"
+                                    title="Mark Filed"
+                                >
+                                    <FaCheckCircle size={20} />
+                                </button>
+                            )}
                         </div>
-                    ))
-                )}
-            </div>
+                    )
+                })
+            )}
+
+            {deadlines.length > 5 && (
+                <button className="w-full py-2 text-sm text-primary-600 font-medium hover:bg-primary-50 rounded-lg transition">
+                    View All Deadlines
+                </button>
+            )}
         </div>
     );
 };

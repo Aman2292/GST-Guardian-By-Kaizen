@@ -31,71 +31,82 @@ const RegisterFirm = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8 bg-surface p-8 rounded-lg shadow-lg border border-gray-800">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-                        Register your CA Firm
+        <div className="min-h-screen flex items-center justify-center bg-surface-page py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-xl w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-neutral-100">
+                <div className="text-center">
+                    <h2 className="text-3xl font-bold font-heading text-neutral-900">
+                        Register CA Firm
                     </h2>
+                    <p className="mt-2 text-neutral-500">Create your firm's command center</p>
                 </div>
-                {error && <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded">{error}</div>}
+
+                {error && (
+                    <div className="bg-danger-50 border border-danger-500/20 text-danger-700 p-3 rounded-lg flex items-center gap-2 text-sm">
+                        <span>⚠️</span> {error}
+                    </div>
+                )}
+
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div className="mb-4">
-                            <label htmlFor="firmName" className="sr-only">Firm Name</label>
+                    <div className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Firm Name</label>
                             <input
-                                id="firmName"
                                 name="firmName"
                                 type="text"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-background rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Firm Name"
+                                className="input-field"
+                                placeholder="e.g. Sharma & Associates"
                                 value={formData.firmName}
                                 onChange={handleChange}
                             />
                         </div>
-                        <div className="mb-4">
-                            <label htmlFor="email" className="sr-only">Email address</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-background focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Email address"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Email Address</label>
+                                <input
+                                    name="email"
+                                    type="email"
+                                    required
+                                    className="input-field"
+                                    placeholder="admin@firm.com"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Phone Number</label>
+                                <input
+                                    name="phone"
+                                    type="text"
+                                    className="input-field"
+                                    placeholder="+91 98765 43210"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
-                        <div className="mb-4">
-                            <label htmlFor="password" className="sr-only">Password</label>
+
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Password</label>
                             <input
-                                id="password"
                                 name="password"
                                 type="password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-background focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Password"
+                                className="input-field"
+                                placeholder="Create a strong password"
                                 value={formData.password}
                                 onChange={handleChange}
                             />
                         </div>
-                        <div className="mb-4">
-                            <input
-                                name="phone"
-                                type="text"
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-background focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="Phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="mb-4">
+
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-1.5">GST Number <span className="text-neutral-400 font-normal">(Optional)</span></label>
                             <input
                                 name="gstNumber"
                                 type="text"
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-background rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                                placeholder="GST Number (Optional)"
+                                className="input-field"
+                                placeholder="22AAAAA0000A1Z5"
                                 value={formData.gstNumber}
                                 onChange={handleChange}
                             />
@@ -105,16 +116,19 @@ const RegisterFirm = () => {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-background bg-primary hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                            className="w-full btn-primary py-3 text-base shadow-lg shadow-primary-500/30"
                         >
-                            Register Firm
+                            Create Firm Account
                         </button>
                     </div>
                 </form>
-                <div className="text-center">
-                    <Link to="/login" className="text-sm text-primary hover:underline">
-                        Already have an account? Login
-                    </Link>
+                <div className="text-center border-t border-neutral-100 pt-6">
+                    <p className="text-sm text-neutral-500">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 hover:underline">
+                            Sign in here
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>

@@ -4,55 +4,106 @@ import useClients from '../../hooks/useClients';
 import ClientList from '../../components/ca/ClientList';
 import AddClientModal from '../../components/ca/AddClientModal';
 import DeadlineList from '../../components/ca/DeadlineList';
+import Sidebar from '../../components/shared/Sidebar';
+import DocumentList from '../../components/shared/DocumentList'; // Import DocumentList
 
 const CADashboard = () => {
-    const { user, logout } = useAuth();
-    const { clients, loading, refreshClients } = useClients(); // Use updated hook
+    // Removed unused user
+    const { logout } = useAuth();
+    const { clients, loading, refreshClients } = useClients();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Prevent logout from being unused if we remove header button
+    // Actually Sidebar handles logout now. 
+
     return (
-        <div className="min-h-screen bg-background text-white flex flex-col">
-            <nav className="bg-surface border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-10">
-                <h1 className="text-xl font-bold font-mono text-primary flex items-center gap-2">
-                    <span className="text-2xl">⚡</span> CA Command Center <span className="text-xs text-gray-400 px-2 py-0.5 bg-gray-800 rounded">CA Portal</span>
-                </h1>
-                <div className="flex items-center gap-4">
-                    <div className="text-right hidden sm:block">
-                        <div className="text-sm font-bold">{user?.name}</div>
-                        <div className="text-xs text-gray-400">CA Member</div>
-                    </div>
-                    <button onClick={logout} className="text-sm border border-red-500/50 text-red-400 px-3 py-1.5 rounded hover:bg-red-500/10 transition">Logout</button>
-                </div>
-            </nav>
+        <div className="min-h-screen bg-surface-page font-body text-neutral-900 flex">
+            {/* Sidebar */}
+            <Sidebar />
 
-            <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1600px] mx-auto w-full">
-                {/* Left Column: Stats & Deadlines */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-surface p-5 rounded-lg border border-gray-800">
-                            <h3 className="text-gray-400 text-sm">Total Clients</h3>
-                            <p className="text-3xl font-mono mt-1">{clients.length}</p>
+            {/* Main Content Area */}
+            <div className="flex-1 ml-64 transition-all duration-300">
+
+                {/* Top Header */}
+                <header className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-40 px-8 flex items-center justify-between">
+                    <h1 className="text-xl font-bold font-heading text-neutral-800">Overview</h1>
+
+                    <div className="flex items-center gap-4">
+                        {/* Search Bar Placeholder */}
+                        <div className="hidden md:flex items-center px-3 py-1.5 bg-neutral-100 rounded-lg border border-transparent focus-within:border-primary-300 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                            <span className="text-neutral-400 text-sm">⌘K</span>
+                            <input type="text" placeholder="Search..." className="bg-transparent border-none text-sm ml-2 focus:ring-0 w-48 placeholder-neutral-400" />
                         </div>
-                        <div className="bg-surface p-5 rounded-lg border border-gray-800">
-                            <h3 className="text-gray-400 text-sm">Pending Actions</h3>
-                            <p className="text-3xl font-mono mt-1 text-warning">0</p>
+
+                        {/* User Profile Hook */}
+                        <div className="h-8 w-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-xs border border-primary-200">
+                            CA
                         </div>
                     </div>
+                </header>
 
-                    <div className="h-[500px]">
-                        <DeadlineList />
+                <main className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
+                            <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Total Clients</h3>
+                            <div className="flex items-end justify-between">
+                                <span className="text-4xl font-bold font-heading text-neutral-900">{clients.length}</span>
+                                <span className="text-success-500 text-sm font-medium bg-success-50 px-2 py-0.5 rounded-full">+2 this week</span>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
+                            <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Pending Deadlines</h3>
+                            <div className="flex items-end justify-between">
+                                <span className="text-4xl font-bold font-heading text-neutral-900">0</span>
+                                <span className="text-warning-500 text-sm font-medium bg-warning-50 px-2 py-0.5 rounded-full">Due soon</span>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
+                            <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Documents Processed</h3>
+                            <div className="flex items-end justify-between">
+                                <span className="text-4xl font-bold font-heading text-neutral-900">0</span>
+                                <span className="text-primary-500 text-sm font-medium bg-primary-50 px-2 py-0.5 rounded-full">Latest</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* Right Column: Client Management */}
-                <div className="lg:col-span-2 h-[calc(100vh-140px)] min-h-[500px]">
-                    {loading ? (
-                        <div className="h-full bg-surface border border-gray-800 rounded-lg flex items-center justify-center text-gray-400">Loading Clients...</div>
-                    ) : (
-                        <ClientList clients={clients} onAddClick={() => setIsModalOpen(true)} />
-                    )}
-                </div>
-            </main>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Main Column: Clients & Documents */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Clients Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold font-heading">Recent Clients</h2>
+                                    <button
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                                    >
+                                        + Add New Client
+                                    </button>
+                                </div>
+                                {loading ? (
+                                    <div className="h-48 rounded-xl bg-neutral-100 animate-pulse flex items-center justify-center text-neutral-400">Loading details...</div>
+                                ) : (
+                                    <ClientList clients={clients} onAddClick={() => setIsModalOpen(true)} />
+                                )}
+                            </div>
+
+                            {/* Recent Documents Section */}
+                            <div>
+                                <h2 className="text-xl font-bold font-heading mb-4">Latest Documents</h2>
+                                <DocumentList />
+                            </div>
+                        </div>
+
+                        {/* Side Column: Deadlines */}
+                        <div className="lg:col-span-1">
+                            <h2 className="text-xl font-bold font-heading mb-6">Upcoming Support</h2>
+                            <DeadlineList />
+                        </div>
+                    </div>
+                </main>
+            </div>
 
             <AddClientModal
                 isOpen={isModalOpen}

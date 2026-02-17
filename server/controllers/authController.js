@@ -37,7 +37,7 @@ exports.registerFirm = async (req, res) => {
             name: `Admin - ${firmName}`,
             email,
             password: hashedPassword,
-            role: 'ca',
+            role: 'firms',
             phone,
             caProfile: {
                 isAdmin: true,
@@ -130,8 +130,8 @@ exports.refreshToken = async (req, res) => {
 // @desc    Invite a new CA to the Firm
 // @route   POST /api/auth/invite/ca
 exports.inviteCA = async (req, res) => {
-    // Only Firm Admin can invite CAs - check handled by middleware, but double check here
-    if (!req.user.isAdmin) {
+    // Only Firm Admin can invite CAs
+    if (req.user.role !== 'firms') {
         return res.status(403).json({ success: false, message: 'Only Firm Admin can invite CAs' });
     }
 

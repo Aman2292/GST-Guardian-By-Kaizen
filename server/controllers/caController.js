@@ -117,3 +117,57 @@ exports.markAsFiled = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+// @desc    Get Client by ID
+// @route   GET /api/ca/clients/:id
+exports.getClient = async (req, res) => {
+    try {
+        const client = await User.findById(req.params.id).select('-password');
+
+        if (!client) {
+            return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+
+        // Verify access (must be in same firm)
+        if (client.firmId.toString() !== req.user.firmId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        res.json({ success: true, data: client });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Update Client Details
+// @route   PUT /api/ca/clients/:id
+exports.updateClient = async (req, res) => {
+    try {
+        const { name, phone, businessName, gstin, address, pan } = req.body;
+
+        let client = await User.findById(req.params.id);
+
+        if (!client) {
+            return res.status(404).json({ success: false, message: 'Client not found' });
+        }
+
+        if (client.firmId.toString() !== req.user.firmId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        // Update fields
+        client.name = name || client.name;
+        client.phone = phone || client.phone;
+        if (client.clientProfile) {
+            client.clientProfile.businessName = businessName || client.clientProfile.businessName;
+            client.clientProfile.gstin = gstin || client.clientProfile.gstin;
+            client.clientProfile.address = address || client.clientProfile.address;
+            client.clientProfile.pan = pan || client.clientProfile.pan;
+        }
+
+        await client.save();
+        res.json({ success: true, data: client, message: 'Client updated successfully' });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

@@ -2,6 +2,7 @@ const Document = require('../models/Document');
 const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
+const { extractTextFromBuffer, analyzeWithGemini } = require('../services/ocrService');
 
 // @desc    Upload a Document
 // @route   POST /api/documents/upload
@@ -11,10 +12,8 @@ exports.uploadDocument = async (req, res) => {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const { clientId, type, description } = req.body;
+        const { clientId, category } = req.body;
 
-        // Ensure clientId is present if uploader is CA
-        // If uploader is client, clientId is self
         let targetClientId = clientId;
         if (req.user.role === 'client') {
             targetClientId = req.user.userId;
@@ -23,6 +22,17 @@ exports.uploadDocument = async (req, res) => {
         if (!targetClientId) {
             return res.status(400).json({ success: false, message: 'Client ID is required' });
         }
+
+        // 1. Run OCR (Tesseract + PDF Support)
+        console.log('--- OCR START ---');
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const rawText = await extractTextFromBuffer(fileBuffer, req.file.mimetype);
+        console.log('--- OCR END (Text Length:', rawText.length, ') ---');
+
+        // 2. Run AI Analysis (Gemini)
+        console.log('--- AI START ---');
+        const geminiAnalysis = await analyzeWithGemini(rawText);
+        console.log('--- AI END (Analysis Success:', !!geminiAnalysis, ') ---');
 
         // 3. Create Document Entry
         const document = await Document.create({
@@ -36,22 +46,53 @@ exports.uploadDocument = async (req, res) => {
             fileUrl: req.file.path,
             fileType: req.file.mimetype,
             fileSize: req.file.size,
+            category: category || 'Unclassified',
 
-            category: req.body.category || 'Unclassified',
+            // AI Data
+            status: geminiAnalysis?.compliance_flags?.length > 0 ? 'flagged' : 'processed',
+            ocrText: rawText,
+            extractedText: rawText.substring(0, 500) + '...', // Short preview
 
-            // SIMULATION: Auto-process the document
-            status: 'processed',
-            extractedText: "INVOICE #INV-2024-001\nVendor: ABC Corp\nDate: 2024-01-15\nTotal: ₹12,500\nGSTIN: 29ABCDE1234F1Z5\n\nItems:\n1. Web Hosting Service - ₹10,000\n2. GST (18%) - ₹1,800",
             extractedData: {
-                vendorName: 'ABC Corp',
-                amount: 12500,
-                invoiceDate: '2024-01-15'
-            }
+                vendorName: geminiAnalysis?.extracted_data?.supplier_name || geminiAnalysis?.extracted_data?.vendor_name || 'N/A',
+                amount: geminiAnalysis?.extracted_data?.total_amount || geminiAnalysis?.extracted_data?.amount || 0,
+                invoiceDate: geminiAnalysis?.extracted_data?.invoice_date || '',
+                gstin: geminiAnalysis?.extracted_data?.supplier_gstin || '',
+                invoiceNumber: geminiAnalysis?.extracted_data?.invoice_number || '',
+
+                supplierName: geminiAnalysis?.extracted_data?.supplier_name || geminiAnalysis?.extracted_data?.vendor_name,
+                supplierGstin: geminiAnalysis?.extracted_data?.supplier_gstin,
+                recipientName: geminiAnalysis?.extracted_data?.recipient_name,
+                recipientGstin: geminiAnalysis?.extracted_data?.recipient_gstin,
+                taxableValue: geminiAnalysis?.extracted_data?.taxable_value || geminiAnalysis?.extracted_data?.taxable_amount,
+                cgstAmount: geminiAnalysis?.extracted_data?.cgst_amount,
+                sgstAmount: geminiAnalysis?.extracted_data?.sgst_amount,
+                igstAmount: geminiAnalysis?.extracted_data?.igst_amount,
+                cessAmount: geminiAnalysis?.extracted_data?.cess_amount,
+                totalAmount: geminiAnalysis?.extracted_data?.total_amount || geminiAnalysis?.extracted_data?.amount,
+                placeOfSupply: geminiAnalysis?.extracted_data?.place_of_supply,
+                hsnCodes: geminiAnalysis?.extracted_data?.hsn_codes,
+
+                // New Advanced Fields
+                documentType: geminiAnalysis?.document_type || geminiAnalysis?.extracted_data?.document_type,
+                reverseCharge: geminiAnalysis?.extracted_data?.reverse_charge,
+                irn: geminiAnalysis?.extracted_data?.irn,
+                qrCodePresent: geminiAnalysis?.extracted_data?.qr_code_present,
+                currency: geminiAnalysis?.extracted_data?.currency || 'INR',
+                exchangeRate: geminiAnalysis?.extracted_data?.exchange_rate,
+                originalTotalAmount: geminiAnalysis?.extracted_data?.original_total_amount
+            },
+            complianceFlags: geminiAnalysis?.compliance_flags?.map(f => ({
+                issue: f.issue,
+                severity: f.severity,
+                explanation: f.explanation
+            })) || [],
+            riskLevel: geminiAnalysis?.risk_level || (geminiAnalysis?.compliance_flags?.length > 0 ? 'high' : 'low'),
+            suggestedAction: geminiAnalysis?.suggested_action,
+            aiClassified: true
         });
 
-        // If uploaded for a deadline, link them back (optional if using query, but good for quick UI)
         res.status(201).json({ success: true, data: document });
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Server Error' });
@@ -103,6 +144,7 @@ exports.getDocuments = async (req, res) => {
 
         const documents = await Document.find(query)
             .populate('uploadedBy', 'name role')
+            .populate('verifiedBy', 'name')
             .populate('clientId', 'name clientProfile.businessName')
             .sort({ createdAt: -1 });
 

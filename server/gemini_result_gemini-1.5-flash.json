@@ -1,0 +1,20 @@
+{
+  "extracted_data": {
+    "supplier_gstin": "",
+    "recipient_gstin": "",
+    "total_amount": 0,
+    "taxable_value": 0,
+    "invoice_date": "04/13/2013",
+    "invoice_number": "51109338",
+    "supplier_name": "Extracted via OCR (AI failed)"
+  },
+  "compliance_flags": [
+    {
+      "issue": "AI Analysis (2.0) Failed",
+      "severity": "medium",
+      "explanation": "The AI analysis step encountered an error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.. Basic data was extracted using pattern matching."
+    }
+  ],
+  "risk_level": "medium",
+  "suggested_action": "Please manually verify fields as deep AI audit failed."
+}

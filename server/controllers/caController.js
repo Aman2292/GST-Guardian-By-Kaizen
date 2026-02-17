@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Deadline = require('../models/Deadline');
+const Document = require('../models/Document');
 const bcrypt = require('bcryptjs');
 const { generateDeadlinesForClient } = require('../services/deadlineService');
 
@@ -172,6 +173,50 @@ exports.updateClient = async (req, res) => {
         res.json({ success: true, data: client, message: 'Client updated successfully' });
 
     } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+// @desc    Get CA Dashboard Stats
+// @route   GET /api/ca/stats
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const firmId = req.user.firmId;
+        const caId = req.user.userId;
+
+        // Clients count
+        let clientQuery = { firmId, role: 'client' };
+        if (!req.user.isAdmin && req.user.role !== 'firms') {
+            clientQuery['clientProfile.assignedCAId'] = caId;
+        }
+        const clientCount = await User.countDocuments(clientQuery);
+
+        // Deadlines count (Pending)
+        let deadlineQuery = { firmId, status: { $ne: 'filed' } };
+        if (!req.user.isAdmin && req.user.role !== 'firms') {
+            deadlineQuery.caId = caId;
+        }
+        const pendingDeadlines = await Deadline.countDocuments(deadlineQuery);
+
+        // Documents Pending Final Verification (verified_l1)
+        let docQuery = { firmId, status: 'verified_l1' };
+        // We filter docs similarly? Document model has clientId but not necessarily caId unless we add it.
+        // For now, firm wide for CA/Admin
+        const pendingVerification = await Document.countDocuments(docQuery);
+
+        // Documents AI Audited (processed)
+        const aiAudited = await Document.countDocuments({ firmId, status: 'processed' });
+
+        res.json({
+            success: true,
+            data: {
+                clientCount,
+                pendingDeadlines,
+                pendingVerification,
+                aiAudited
+            }
+        });
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

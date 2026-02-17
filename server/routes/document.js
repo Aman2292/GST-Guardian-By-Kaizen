@@ -30,6 +30,7 @@ router.use(authMiddleware);
 
 router.post('/upload', upload.single('file'), uploadDocument);
 router.get('/', getDocuments);
+router.patch('/:id/verify', verifyDocument);
 router.delete('/:id', deleteDocument);
 
 module.exports = router;

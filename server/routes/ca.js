@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addClient, getClients, getDeadlines, markAsFiled, getClient, updateClient } = require('../controllers/caController');
+const { addClient, getClients, getDeadlines, markAsFiled, getClient, updateClient, getDashboardStats } = require('../controllers/caController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { isCA } = require('../middleware/roleCheck');
 
@@ -9,6 +9,7 @@ router.use(authMiddleware, isCA);
 
 router.post('/clients', addClient);
 router.get('/clients', getClients);
+router.get('/stats', getDashboardStats);
 
 router.get('/clients/:id', getClient);
 router.put('/clients/:id', updateClient);

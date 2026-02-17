@@ -48,23 +48,18 @@ const DeadlineList = ({ clientId }) => {
         const diffTime = due - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays < 0) return {
-            badge: 'bg-neutral-100 text-neutral-600 border-neutral-200', // Expired
-            border: 'border-l-4 border-l-neutral-400'
-        };
-
-        if (diffDays <= 3) return {
-            badge: 'bg-danger-50 text-danger-700 border-danger-200', // Red: < 3 days
+        if (diffDays <= 0) return {
+            badge: 'bg-danger-50 text-danger-700 border-danger-200', // Red: <= 0 days
             border: 'border-l-4 border-l-danger-500'
         };
 
-        if (diffDays <= 7) return {
-            badge: 'bg-warning-50 text-warning-700 border-warning-200', // Yellow: < 7 days
+        if (diffDays <= 5) return {
+            badge: 'bg-warning-50 text-warning-700 border-warning-200', // Yellow: 1-5 days
             border: 'border-l-4 border-l-warning-400'
         };
 
         return {
-            badge: 'bg-success-50 text-success-700 border-success-200', // Green: > 7 days
+            badge: 'bg-success-50 text-success-700 border-success-200', // Green: > 5 days
             border: 'border-l-4 border-l-success-500'
         };
     };

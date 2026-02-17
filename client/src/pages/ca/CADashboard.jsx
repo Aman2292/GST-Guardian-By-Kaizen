@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import useAuth from '../../hooks/useAuth';
 import useClients from '../../hooks/useClients';
 import ClientList from '../../components/ca/ClientList';
@@ -12,9 +13,30 @@ const CADashboard = () => {
     const { logout } = useAuth();
     const { clients, loading, refreshClients } = useClients();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [stats, setStats] = useState({
+        clientCount: 0,
+        pendingDeadlines: 0,
+        pendingVerification: 0,
+        aiAudited: 0
+    });
+    const [statsLoading, setStatsLoading] = useState(true);
 
-    // Prevent logout from being unused if we remove header button
-    // Actually Sidebar handles logout now. 
+    const fetchStats = async () => {
+        try {
+            const { data } = await api.get('/ca/stats');
+            if (data.success) {
+                setStats(data.data);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
 
     return (
         <div className="min-h-screen bg-surface-page font-body text-neutral-900 flex">
@@ -48,21 +70,21 @@ const CADashboard = () => {
                         <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
                             <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Total Clients</h3>
                             <div className="flex items-end justify-between">
-                                <span className="text-4xl font-bold font-heading text-neutral-900">{clients.length}</span>
+                                <span className="text-4xl font-bold font-heading text-neutral-900">{stats.clientCount || clients.length}</span>
                                 <span className="text-success-500 text-sm font-medium bg-success-50 px-2 py-0.5 rounded-full">+2 this week</span>
                             </div>
                         </div>
                         <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
                             <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Pending Deadlines</h3>
                             <div className="flex items-end justify-between">
-                                <span className="text-4xl font-bold font-heading text-neutral-900">0</span>
+                                <span className="text-4xl font-bold font-heading text-neutral-900">{stats.pendingDeadlines}</span>
                                 <span className="text-warning-500 text-sm font-medium bg-warning-50 px-2 py-0.5 rounded-full">Due soon</span>
                             </div>
                         </div>
                         <div className="bg-white p-6 rounded-xl shadow-card border border-neutral-100 card-hover">
-                            <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Documents Processed</h3>
+                            <h3 className="text-neutral-500 text-sm font-medium uppercase tracking-wider mb-2">Pending Verification</h3>
                             <div className="flex items-end justify-between">
-                                <span className="text-4xl font-bold font-heading text-neutral-900">0</span>
+                                <span className="text-4xl font-bold font-heading text-neutral-900">{stats.pendingVerification}</span>
                                 <span className="text-primary-500 text-sm font-medium bg-primary-50 px-2 py-0.5 rounded-full">Latest</span>
                             </div>
                         </div>

@@ -19,11 +19,42 @@ const DocumentSchema = new mongoose.Schema({
         amount: Number,
         gstin: String,
         invoiceNumber: String,
-        confidence: Number
+        confidence: Number,
+        // Detailed fields from Gemini
+        supplierName: String,
+        supplierGstin: String,
+        recipientName: String,
+        recipientGstin: String,
+        taxableValue: Number,
+        cgstAmount: Number,
+        sgstAmount: Number,
+        igstAmount: Number,
+        totalAmount: Number,
+        placeOfSupply: String,
+        hsnCodes: [String],
+        // New Advanced Fields
+        documentType: String,
+        cessAmount: Number,
+        reverseCharge: Boolean,
+        irn: String,
+        qrCodePresent: Boolean,
+        currency: String,
+        exchangeRate: Number,
+        originalTotalAmount: Number
     },
+
+    complianceFlags: [
+        {
+            issue: String,
+            severity: { type: String, enum: ['high', 'medium', 'low'] },
+            explanation: String
+        }
+    ],
 
     ocrText: String,    // Raw text
     extractedText: String, // Processed text for preview
+    riskLevel: { type: String, enum: ['high', 'medium', 'low'], default: 'low' },
+    suggestedAction: String,
     aiClassified: { type: Boolean, default: false },
     isDuplicate: { type: Boolean, default: false },
     duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },

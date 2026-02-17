@@ -1,6 +1,10 @@
 import { FaSearch, FaEllipsisH } from 'react-icons/fa';
 
+import { useNavigate } from 'react-router-dom';
+
 const ClientList = ({ clients, onAddClick }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white rounded-xl shadow-card border border-neutral-100 flex flex-col overflow-hidden">
             <div className="p-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50/50">
@@ -33,7 +37,11 @@ const ClientList = ({ clients, onAddClick }) => {
                             <tr><td colSpan="5" className="p-12 text-center text-neutral-400">No clients found. Add one to get started.</td></tr>
                         ) : (
                             clients.map(client => (
-                                <tr key={client._id} className="hover:bg-neutral-50/80 transition group">
+                                <tr
+                                    key={client._id}
+                                    onClick={() => navigate(`/ca/clients/${client._id}`)}
+                                    className="hover:bg-neutral-50/80 transition group cursor-pointer"
+                                >
                                     <td className="px-6 py-4">
                                         <div className="font-semibold text-neutral-900">{client.clientProfile?.businessName}</div>
                                         <div className="text-xs text-neutral-500 mt-0.5 px-2 py-0.5 bg-neutral-100 rounded inline-block">

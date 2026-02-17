@@ -6,6 +6,10 @@ import AcceptInvite from './pages/auth/AcceptInvite';
 import FirmDashboard from './pages/firm/FirmDashboard';
 import CADashboard from './pages/ca/CADashboard';
 import ClientDetails from './pages/ca/ClientDetails';
+import CAClients from './pages/ca/CAClients';
+import CADocuments from './pages/ca/CADocuments';
+import CADeadlines from './pages/ca/CADeadlines';
+import CASettings from './pages/ca/CASettings';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import useAuth from './hooks/useAuth';
 
@@ -23,6 +27,9 @@ function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<NavigateResolver />} />
+            {/* Client Routes - Accessible if role is client, but simplified check here or separate route group */}
+            <Route path="/client/documents" element={<ClientDocuments />} />
+            <Route path="/client/profile" element={<ClientProfile />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['firms']} />}>
@@ -31,7 +38,11 @@ function App() {
 
           <Route element={<ProtectedRoute allowedRoles={['ca']} />}>
             <Route path="/ca/dashboard" element={<CADashboard />} />
+            <Route path="/ca/clients" element={<CAClients />} />
             <Route path="/ca/clients/:id" element={<ClientDetails />} />
+            <Route path="/ca/documents" element={<CADocuments />} />
+            <Route path="/ca/deadlines" element={<CADeadlines />} />
+            <Route path="/ca/settings" element={<CASettings />} />
           </Route>
 
           {/* Fallback */}
@@ -43,6 +54,8 @@ function App() {
 }
 
 import ClientDashboard from './pages/client/ClientDashboard';
+import ClientDocuments from './pages/client/ClientDocuments';
+import ClientProfile from './pages/client/ClientProfile';
 
 // Helper to redirect based on role
 const NavigateResolver = () => {

@@ -4,6 +4,10 @@ import Login from './pages/auth/Login';
 import RegisterFirm from './pages/auth/RegisterFirm';
 import AcceptInvite from './pages/auth/AcceptInvite';
 import FirmDashboard from './pages/firm/FirmDashboard';
+import FirmCAs from './pages/firm/FirmCAs';
+import FirmClients from './pages/firm/FirmClients';
+import FirmReports from './pages/firm/FirmReports';
+import FirmSettings from './pages/firm/FirmSettings';
 import CADashboard from './pages/ca/CADashboard';
 import ClientDetails from './pages/ca/ClientDetails';
 import CAClients from './pages/ca/CAClients';
@@ -34,6 +38,11 @@ function App() {
 
           <Route element={<ProtectedRoute allowedRoles={['firms']} />}>
             <Route path="/firm/dashboard" element={<FirmDashboard />} />
+            <Route path="/firm/cas" element={<FirmCAs />} />
+            <Route path="/firm/clients" element={<FirmClients />} />
+            <Route path="/firm/clients/:id" element={<ClientDetails />} />
+            <Route path="/firm/reports" element={<FirmReports />} />
+            <Route path="/firm/settings" element={<FirmSettings />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['ca']} />}>

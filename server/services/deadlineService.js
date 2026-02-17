@@ -9,67 +9,74 @@ const COMPLIANCE_CALENDAR = [
     { type: 'ITR Filing', day: 31, month: 7, recurring: false } // Annual (July)
 ];
 
+const Firm = require('../models/Firm');
+
 const generateDeadlinesForClient = async (client) => {
-    const { start, end } = getFinancialYear(); // e.g. 2023, 2024
+    const { start, end } = getFinancialYear();
     const deadlinesToInsert = [];
 
-    // Loop through FY months (April to March)
-    // 4,5,6,7,8,9,10,11,12 (Year Start) -> 1,2,3 (Year End)
+    // Fetch Firm Config
+    const firm = await Firm.findById(client.firmId);
 
-    const months = [
-        { m: 4, y: start }, { m: 5, y: start }, { m: 6, y: start },
-        { m: 7, y: start }, { m: 8, y: start }, { m: 9, y: start },
-        { m: 10, y: start }, { m: 11, y: start }, { m: 12, y: start },
-        { m: 1, y: end }, { m: 2, y: end }, { m: 3, y: end }
+    // Default config if not set
+    const defaultConfig = [
+        { type: 'GSTR-1', dueDay: 11 },
+        { type: 'GSTR-3B', dueDay: 20 },
+        { type: 'TDS Payment', dueDay: 7 }
     ];
 
-    months.forEach(({ m, y }) => {
-        COMPLIANCE_CALENDAR.forEach(compliance => {
-            if (compliance.recurring) {
-                // For monthly stuff, due date is usually in the NEXT month for the current month's data
-                // e.g. April Data -> Due May 11th
-                let dueMonth = m + 1;
-                let dueYear = y;
+    const config = (firm?.complianceConfig && firm.complianceConfig.length > 0)
+        ? firm.complianceConfig
+        : defaultConfig;
 
-                if (dueMonth > 12) {
-                    dueMonth = 1;
-                    dueYear++;
-                }
+    // Helper to find day for a type
+    const getDayForType = (type) => config.find(c => c.type === type)?.dueDay || 11;
 
-                const dueDate = getDateObj(compliance.day, dueMonth, dueYear);
+    // FEB 2026 GENERATION (Fixed Month Logic as requested)
+    const year = 2026;
+    const month = 1; // Feb (0-indexed)
 
-                deadlinesToInsert.push({
-                    firmId: client.firmId,
-                    caId: client.clientProfile.assignedCAId,
-                    clientId: client._id,
-                    type: compliance.type,
-                    month: m,
-                    year: y,
-                    dueDate: dueDate,
-                    status: 'pending'
-                });
-            } else {
-                // One-time annual deadlines
-                if (compliance.month === m) {
-                    const dueDate = getDateObj(compliance.day, compliance.month, y);
-                    deadlinesToInsert.push({
-                        firmId: client.firmId,
-                        caId: client.clientProfile.assignedCAId,
-                        clientId: client._id,
-                        type: compliance.type,
-                        month: m,
-                        year: y,
-                        dueDate: dueDate,
-                        status: 'pending'
-                    });
-                }
-            }
+    const febDeadlines = [
+        { type: 'GSTR-1', day: getDayForType('GSTR-1') },
+        { type: 'GSTR-3B', day: getDayForType('GSTR-3B') },
+        { type: 'TDS Payment', day: getDayForType('TDS Payment') }
+    ];
+
+    febDeadlines.forEach(d => {
+        deadlinesToInsert.push({
+            firmId: client.firmId,
+            caId: client.clientProfile.assignedCAId,
+            clientId: client._id,
+            type: d.type,
+            month: month + 1, // Store as 2 for Feb
+            year: year,
+            dueDate: new Date(year, month, d.day), // e.g., 2026-02-11
+            status: 'pending'
         });
     });
 
+    // Add One-Time Income Tax (March)
+    deadlinesToInsert.push({
+        firmId: client.firmId,
+        caId: client.clientProfile.assignedCAId,
+        clientId: client._id,
+        type: 'Income Tax Advance',
+        month: 3,
+        year: 2026,
+        dueDate: new Date(2026, 2, 15),
+        status: 'pending'
+    });
+
     if (deadlinesToInsert.length > 0) {
+        // Clear existing for this period to avoid dupes during re-seeding
+        await Deadline.deleteMany({
+            clientId: client._id,
+            month: 2,
+            year: 2026
+        });
+
         await Deadline.insertMany(deadlinesToInsert);
-        console.log(`Generated ${deadlinesToInsert.length} deadlines for client ${client.name}`);
+        console.log(`Generated ${deadlinesToInsert.length} Feb 2026 deadlines for client ${client.name}`);
     }
 };
 

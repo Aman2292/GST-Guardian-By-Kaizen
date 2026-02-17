@@ -22,7 +22,8 @@ const DocumentSchema = new mongoose.Schema({
         confidence: Number
     },
 
-    ocrText: String,
+    ocrText: String,    // Raw text
+    extractedText: String, // Processed text for preview
     aiClassified: { type: Boolean, default: false },
     isDuplicate: { type: Boolean, default: false },
     duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },
@@ -30,7 +31,9 @@ const DocumentSchema = new mongoose.Schema({
     month: Number,
     year: Number,
 
-    status: { type: String, enum: ['uploaded', 'processing', 'verified', 'rejected'], default: 'uploaded' },
+    deadlineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Deadline' },
+
+    status: { type: String, enum: ['uploaded', 'processing', 'processed', 'flagged', 'rejected', 'verified_l1'], default: 'uploaded' },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: Date,
 

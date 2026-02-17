@@ -15,6 +15,7 @@ const Sidebar = () => {
         navItems = [
             { name: 'Dashboard', path: '/firm/dashboard', icon: FaHome },
             { name: 'My CAs', path: '/firm/cas', icon: FaUsers },
+            { name: 'Clients', path: '/firm/clients', icon: FaUsers },
             { name: 'Reports', path: '/firm/reports', icon: FaFileInvoice },
             { name: 'Settings', path: '/firm/settings', icon: FaCog },
         ];
@@ -73,13 +74,25 @@ const Sidebar = () => {
                 })}
             </nav>
 
-            {/* User & Logout */}
-            <div className="p-4 border-t border-gray-700/50">
+            {/* User Profile & Logout */}
+            <div className="mt-auto border-t border-gray-700/50 p-4 space-y-3">
+                <div className="px-3 py-2 flex items-center gap-3 bg-neutral-800/50 rounded-xl border border-gray-700/30">
+                    <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-primary-500/20">
+                        {user?.name?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-white truncate">{user?.name}</div>
+                        <div className="text-[10px] uppercase tracking-wider font-extrabold text-primary-400">
+                            {user?.role === 'firms' ? 'Firm Owner' : user?.role === 'ca' ? 'CA Expert' : 'Client Hub'}
+                        </div>
+                    </div>
+                </div>
+
                 <button
                     onClick={logout}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-neutral-800 hover:text-red-400 transition-colors"
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-neutral-800 hover:text-red-400 transition-colors group"
                 >
-                    <FaSignOutAlt />
+                    <FaSignOutAlt className="group-hover:rotate-12 transition-transform" />
                     <span>Sign Out</span>
                 </button>
             </div>

@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadDocument, getDocuments, deleteDocument } = require('../controllers/documentController');
+const { uploadDocument, getDocuments, deleteDocument, verifyDocument } = require('../controllers/documentController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Configure Multer Storage

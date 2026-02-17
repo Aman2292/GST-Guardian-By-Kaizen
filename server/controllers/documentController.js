@@ -24,23 +24,61 @@ exports.uploadDocument = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Client ID is required' });
         }
 
-        // Create Document Record
+        // 3. Create Document Entry
         const document = await Document.create({
             firmId: req.user.firmId,
             clientId: targetClientId,
             uploadedBy: req.user.userId,
-            name: req.file.originalname,
-            type: type || 'General',
-            url: `/uploads/${req.file.filename}`, // Local path for now
-            status: 'Uploaded',
-            metadata: {
-                size: req.file.size,
-                mimeType: req.file.mimetype
+            deadlineId: req.body.deadlineId || null,
+
+            fileName: req.file.filename,
+            originalName: req.file.originalname,
+            fileUrl: req.file.path,
+            fileType: req.file.mimetype,
+            fileSize: req.file.size,
+
+            category: req.body.category || 'Unclassified',
+
+            // SIMULATION: Auto-process the document
+            status: 'processed',
+            extractedText: "INVOICE #INV-2024-001\nVendor: ABC Corp\nDate: 2024-01-15\nTotal: ₹12,500\nGSTIN: 29ABCDE1234F1Z5\n\nItems:\n1. Web Hosting Service - ₹10,000\n2. GST (18%) - ₹1,800",
+            extractedData: {
+                vendorName: 'ABC Corp',
+                amount: 12500,
+                invoiceDate: '2024-01-15'
             }
         });
 
+        // If uploaded for a deadline, link them back (optional if using query, but good for quick UI)
         res.status(201).json({ success: true, data: document });
 
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Verify Document (L1)
+// @route   PATCH /api/documents/:id/verify
+exports.verifyDocument = async (req, res) => {
+    try {
+        const document = await Document.findById(req.params.id);
+
+        if (!document) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        if (document.firmId.toString() !== req.user.firmId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        document.status = 'verified_l1';
+        document.verifiedBy = req.user.userId;
+        document.verifiedAt = Date.now();
+
+        await document.save();
+
+        res.json({ success: true, data: document, message: 'Document verified (Level 1)' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Server Error' });

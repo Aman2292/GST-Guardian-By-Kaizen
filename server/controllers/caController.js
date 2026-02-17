@@ -58,8 +58,8 @@ exports.getClients = async (req, res) => {
     try {
         let query = { firmId: req.user.firmId, role: 'client' };
 
-        // If not admin, only show assumed clients
-        if (!req.user.isAdmin) {
+        // If not admin/firm owner, only show assumed clients
+        if (!req.user.isAdmin && req.user.role !== 'firms') {
             query['clientProfile.assignedCAId'] = req.user.userId;
         }
 
@@ -77,8 +77,12 @@ exports.getDeadlines = async (req, res) => {
         let query = { firmId: req.user.firmId };
 
         // If not admin, only show own clients' deadlines
-        if (!req.user.isAdmin) {
+        if (!req.user.isAdmin && req.user.role !== 'firms') {
             query.caId = req.user.userId;
+        }
+
+        if (req.query.clientId) {
+            query.clientId = req.query.clientId;
         }
 
         const deadlines = await Deadline.find(query)

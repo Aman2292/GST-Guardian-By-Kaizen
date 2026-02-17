@@ -77,9 +77,9 @@ const analyzeWithGemini = async (rawText) => {
     console.log(`[AI-DIAGNOSTIC] OpenAI Key: ${openaiApiKey ? openaiApiKey.substring(0, 10) + '...' : 'MISSING'}`);
 
     const advancedPrompt = `
-    You are a senior GST compliance expert with complete knowledge of the CGST Act 2017, IGST Act, all GST Council recommendations, CBIC notifications, circulars, and amendments up to February 2026 (including e-invoicing threshold ₹5 crore, QRMP scheme, ITC reversal rules, place of supply guidelines, blocked credits under Section 17(5), reverse charge mechanism, and GSTR-2B reconciliation logic).
+    You are a senior GST compliance expert and financial analyst with complete knowledge of the CGST Act 2017 and bank statement reconciliation logic.
 
-    The following is RAW TEXT extracted via OCR from an Indian GST invoice or related document. The text may be messy, out of order, contain typos, extra spaces, line breaks, garbage characters, or mixed languages (mostly English, sometimes Hindi).
+    The following is RAW TEXT extracted via OCR from an Indian financial document (GST Invoice, Bank Statement, Form 16, etc.). The text may be messy.
 
     RAW TEXT:
     """
@@ -88,104 +88,35 @@ const analyzeWithGemini = async (rawText) => {
 
     Your tasks (perform them in this exact order):
 
-    1. Clean the text: Remove garbage characters, fix common OCR errors (e.g., '0' → 'O', 'l' → '1'), normalize spacing, and reconstruct logical lines where possible.
+    1. Clean the text and identify the document type (choose one):
+       - Purchase Invoice
+       - Sale Invoice
+       - Bank Statement
+       - Form 16
+       - GST Notice
+       - Other
 
-    2. Identify the document type (choose one):
-       - Tax Invoice
-       - Bill of Supply
-       - Debit Note
-       - Credit Note
-       - Receipt Voucher
-       - Payment Voucher
-       - Refund Voucher
-       - E-Invoice (IRN present)
-       - Export Invoice / LUT
-       - Self-Invoice (RCM)
-       - Other / Not Recognized
+    2. Generate a "smart_label": A concise, descriptive string for a vault view. 
+       - For invoices: "[Vendor Name] • [Amount] • [Month/Year]"
+       - For bank statements: "[Bank Name] • [Account Last 4] • [Date Range]"
+       - For others: "[Doc Type] • [Key Detail]"
 
-    3. Extract all available key fields as a flat JSON object. Use null or empty string if not found. Be conservative — only extract what is clearly present.
-       Required fields (include even if missing):
-       - document_type (from step 2)
-       - invoice_number
-       - invoice_date (convert to YYYY-MM-DD)
-       - supplier_name
-       - supplier_gstin
-       - recipient_name
-       - recipient_gstin
-       - place_of_supply (state name or code, e.g., "Maharashtra" or "27")
-       - currency (e.g., "INR", "USD", "EUR")
-       - exchange_rate (if not INR, provide the conversion rate used to calculate INR values below. Use current approx market rate if not explicitly on invoice)
-       - taxable_value (number in INR - convert if original is foreign)
-       - cgst_amount (in INR)
-       - sgst_amount (in INR)
-       - igst_amount (in INR)
-       - cess_amount (in INR)
-       - total_amount (in INR - include all taxes)
-       - original_total_amount (total in original currency)
-       - hsn_codes (array of strings or objects if multiple)
-       - reverse_charge (true/false)
-       - irn (e-invoice reference number if present)
-       - qr_code_present (true/false – if you detect QR code mention)
+    3. Extract all available key fields as a flat JSON object 'extracted_data'.
+       If the document is a BANK STATEMENT, extract up to 20 recent transactions into a 'transactions' array with fields: { date, description, amount, type ('debit' or 'credit') }.
 
-    **CRITICAL FOR FOREIGN CURRENCY**: If the invoice is in USD/EUR/etc., you MUST calculate the INR equivalent for all amount fields using a reasonable current rate (e.g. 1 USD = 83 INR) and set the 'currency' field accordingly. The 'total_amount' MUST be in INR for GST compliance in this system.
+    4. Perform compliance checks (flag missing GSTINs, mismatch tax, etc.).
 
-    4. Perform compliance checks. Return an array of issues. For each issue include:
-       - issue (short title)
-       - severity ("high", "medium", "low")
-       - explanation (1-1 sentence, cite relevant section/notification if possible)
-       - action_needed (what the CA or client should do)
+    5. Determine overall risk level ("high", "medium", "low").
 
-       Common checks to run (but only flag if violation is clear):
-       - Missing or invalid supplier GSTIN (15 chars, checksum)
-       - Missing or invalid recipient GSTIN
-       - Missing invoice number or date
-       - Missing taxable value or total amount
-       - No HSN/SAC for taxable supplies > ₹5 lakh (B2B)
-       - Ineligible ITC (motor vehicle, food, health, Sec 17(5))
-       - Wrong tax breakup (CGST+SGST vs IGST based on place of supply)
-       - Date in future or unreasonably old
-       - Possible duplicate invoice number (if pattern suggests)
-       - Reverse charge not applied when required (e.g., GTA, advocate services)
-       - E-invoice missing IRN when turnover threshold applies
-       - Other obvious red flags (e.g., handwritten without proper format)
+    6. Suggest next action.
 
-    5. Determine overall risk level:
-       - "high" = at least one high-severity issue
-       - "medium" = medium issues only
-       - "low" = no or only low issues
-
-    6. Suggest next action (one short sentence)
-
-    7. Output **ONLY** valid JSON.
-
-    The JSON MUST follow this exact structure:
+    7. Output **ONLY** valid JSON following this structure:
     {
       "document_type": "...",
-      "extracted_data": {
-         "invoice_number": "...",
-         "invoice_date": "...",
-         "supplier_name": "...",
-         "supplier_gstin": "...",
-         "recipient_name": "...",
-         "recipient_gstin": "...",
-         "place_of_supply": "...",
-         "currency": "...",
-         "exchange_rate": 83.0,
-         "taxable_value": 0,
-         "cgst_amount": 0,
-         "sgst_amount": 0,
-         "igst_amount": 0,
-         "cess_amount": 0,
-         "total_amount": 0,
-         "original_total_amount": 0,
-         "hsn_codes": [],
-         "reverse_charge": false,
-         "irn": "...",
-         "qr_code_present": false
-      },
-      "compliance_flags": [
-        { "issue": "...", "severity": "...", "explanation": "...", "action_needed": "..." }
-      ],
+      "smart_label": "...",
+      "extracted_data": { ... },
+      "transactions": [ { "date": "...", "description": "...", "amount": 0, "type": "debit/credit" } ],
+      "compliance_flags": [ { "issue": "...", "severity": "...", "explanation": "...", "action_needed": "..." } ],
       "risk_level": "...",
       "suggested_action": "..."
     }

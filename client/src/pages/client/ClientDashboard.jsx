@@ -156,9 +156,24 @@ const ClientDashboard = () => {
                                                         {deadline.status !== 'filed' ? (
                                                             <button
                                                                 onClick={() => openUploadModal(deadline)}
-                                                                className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition shadow-sm"
+                                                                disabled={!!deadline.documentStatus}
+                                                                className={clsx(
+                                                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm",
+                                                                    deadline.documentStatus
+                                                                        ? "bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-200"
+                                                                        : "bg-primary-600 text-white hover:bg-primary-700"
+                                                                )}
                                                             >
-                                                                <FaFileUpload /> Upload Doc
+                                                                {deadline.documentStatus ? (
+                                                                    <>
+                                                                        <FaCheckCircle className="text-neutral-300" />
+                                                                        {deadline.documentStatus === 'verified_l2' ? 'Fully Verified' : 'Pending Review'}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <FaFileUpload /> Upload Doc
+                                                                    </>
+                                                                )}
                                                             </button>
                                                         ) : (
                                                             <div className="flex items-center gap-2 text-success-600 font-bold text-xs bg-success-50 px-3 py-2 rounded-lg w-fit">

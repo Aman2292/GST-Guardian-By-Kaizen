@@ -12,6 +12,7 @@ const DocumentSchema = new mongoose.Schema({
     fileSize: Number,
 
     category: { type: String, enum: ['Purchase Invoice', 'Sale Invoice', 'Bank Statement', 'Form 16', 'GST Notice', 'Other', 'Unclassified'], default: 'Unclassified' },
+    smartLabel: String, // AI-generated readable description
 
     extractedData: {
         vendorName: String,
@@ -48,6 +49,17 @@ const DocumentSchema = new mongoose.Schema({
             issue: String,
             severity: { type: String, enum: ['high', 'medium', 'low'] },
             explanation: String
+        }
+    ],
+
+    transactions: [
+        {
+            date: String,
+            description: String,
+            amount: Number,
+            type: { type: String, enum: ['debit', 'credit'] },
+            matchStatus: { type: String, enum: ['unmatched', 'matched', 'ignored'], default: 'unmatched' },
+            matchedDocumentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' }
         }
     ],
 

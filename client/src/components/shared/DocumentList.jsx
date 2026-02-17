@@ -138,7 +138,7 @@ const DocumentList = ({ clientId, statusFilter, refreshTrigger }) => {
                                     {getIcon(doc.fileType)}
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-neutral-800 truncate max-w-[250px]">{doc.originalName || doc.fileName}</h4>
+                                    <h4 className="text-sm font-bold text-neutral-800 truncate max-w-[250px]">{doc.smartLabel || doc.originalName || doc.fileName}</h4>
                                     <div className="text-[10px] text-neutral-500 flex items-center gap-2 mt-1 font-bold uppercase tracking-tighter">
                                         <span className="bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200">{doc.category || 'Unclassified'}</span>
                                         {getStatusBadge(doc.status)}

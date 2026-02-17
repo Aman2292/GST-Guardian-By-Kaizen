@@ -24,7 +24,7 @@ const Sidebar = () => {
         navItems = [
             { name: 'Dashboard', path: '/ca/dashboard', icon: FaHome },
             { name: 'Clients', path: '/ca/clients', icon: FaUsers },
-            { name: 'Documents', path: '/ca/documents', icon: FaFileInvoice },
+            { name: 'Central Vault', path: '/ca/documents', icon: FaFileInvoice },
             { name: 'Deadlines', path: '/ca/deadlines', icon: FaCalendarAlt },
             { name: 'Settings', path: '/ca/settings', icon: FaCog },
         ];
@@ -32,7 +32,7 @@ const Sidebar = () => {
         // Client
         navItems = [
             { name: 'Dashboard', path: '/dashboard', icon: FaHome },
-            { name: 'My Documents', path: '/client/documents', icon: FaFileInvoice },
+            { name: 'Central Vault', path: '/client/documents', icon: FaFileInvoice },
             { name: 'Profile', path: '/client/profile', icon: FaCog },
         ];
     }

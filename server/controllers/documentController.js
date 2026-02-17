@@ -46,12 +46,13 @@ exports.uploadDocument = async (req, res) => {
             fileUrl: req.file.path,
             fileType: req.file.mimetype,
             fileSize: req.file.size,
-            category: category || 'Unclassified',
+            category: geminiAnalysis?.document_type || category || 'Unclassified',
+            smartLabel: geminiAnalysis?.smart_label || req.file.originalname,
 
             // AI Data
             status: geminiAnalysis?.compliance_flags?.length > 0 ? 'flagged' : 'processed',
             ocrText: rawText,
-            extractedText: rawText.substring(0, 500) + '...', // Short preview
+            extractedText: (geminiAnalysis?.smart_label || rawText.substring(0, 500)) + '...',
 
             extractedData: {
                 vendorName: geminiAnalysis?.extracted_data?.supplier_name || geminiAnalysis?.extracted_data?.vendor_name || 'N/A',
@@ -82,6 +83,7 @@ exports.uploadDocument = async (req, res) => {
                 exchangeRate: geminiAnalysis?.extracted_data?.exchange_rate,
                 originalTotalAmount: geminiAnalysis?.extracted_data?.original_total_amount
             },
+            transactions: geminiAnalysis?.transactions || [],
             complianceFlags: geminiAnalysis?.compliance_flags?.map(f => ({
                 issue: f.issue,
                 severity: f.severity,

@@ -22,6 +22,7 @@ connectDB();
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/ca', require('./routes/ca'));
 app.use('/api/documents', require('./routes/document'));
+app.use('/api/vault', require('./routes/vault'));
 app.use('/api/firm', require('./routes/firm'));
 app.use('/api/client', require('./routes/client'));
 

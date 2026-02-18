@@ -1,6 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { addClient, getClients, getDeadlines, markAsFiled, getClient, updateClient, getDashboardStats } = require('../controllers/caController');
+const {
+    addClient,
+    getClients,
+    getDeadlines,
+    markAsFiled,
+    getClient,
+    updateClient,
+    getDashboardStats,
+    getGroupedDocuments,
+    getGroupedDeadlines
+} = require('../controllers/caController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { isCA } = require('../middleware/roleCheck');
 
@@ -15,6 +25,9 @@ router.get('/clients/:id', getClient);
 router.put('/clients/:id', updateClient);
 
 router.get('/deadlines', getDeadlines);
+router.get('/deadlines/grouped', getGroupedDeadlines);
 router.patch('/deadlines/:id/file', markAsFiled);
+
+router.get('/documents/grouped', getGroupedDocuments);
 
 module.exports = router;

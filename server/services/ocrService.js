@@ -72,6 +72,72 @@ const analyzeWithGemini = async (rawText) => {
     const geminiApiKey = process.env.GEMINI_API_KEY;
     const openaiApiKey = process.env.OPENAI_API_KEY;
 
+    // 0. QUICK REGEX CHECKS — require BOTH pattern + strong Indian identity keywords
+    // These must be very specific to avoid false positives on foreign invoices, phone numbers, etc.
+    const lowerText = rawText.toLowerCase();
+
+    // PAN: 5 letters + 4 digits + 1 letter (e.g. ABCDE1234F)
+    // Only classify as PAN if the doc also has explicit PAN-related keywords
+    const panPattern = /\b[A-Z]{5}[0-9]{4}[A-Z]\b/;
+    const hasPanKeywords = lowerText.includes('permanent account number') ||
+        lowerText.includes('income tax department') ||
+        lowerText.includes('pan card') ||
+        lowerText.includes('govt. of india') && lowerText.includes('pan');
+
+    if (panPattern.test(rawText) && hasPanKeywords) {
+        console.log('[AI] Regex detected PAN Card');
+        return {
+            document_type: 'PAN Card',
+            smart_label: 'PAN Card',
+            compliance_flags: [],
+            risk_level: 'low',
+            extracted_data: { document_type: 'PAN Card', confidence: 0.99 }
+        };
+    }
+
+    // Aadhar: 4-4-4 digit groups — ONLY if strong Aadhar-specific keywords are present
+    // Must NOT fire on foreign invoices, phone numbers, or dollar amounts
+    const aadharPattern = /\b[2-9][0-9]{3}\s[0-9]{4}\s[0-9]{4}\b/; // Aadhar starts with 2-9
+    const hasAadharKeywords = lowerText.includes('aadhaar') ||
+        lowerText.includes('aadhar') ||
+        lowerText.includes('uidai') ||
+        lowerText.includes('unique identification authority') ||
+        lowerText.includes('enrolment no') ||
+        lowerText.includes('government of india') && (lowerText.includes('aadhaar') || lowerText.includes('aadhar'));
+
+    if (aadharPattern.test(rawText) && hasAadharKeywords) {
+        console.log('[AI] Regex detected Aadhar Card');
+        return {
+            document_type: 'Aadhar Card',
+            smart_label: 'Aadhar Card',
+            compliance_flags: [],
+            risk_level: 'low',
+            extracted_data: { document_type: 'Aadhar Card', confidence: 0.99 }
+        };
+    }
+
+    // If keywords exist but pattern didn't match, still classify (e.g. masked Aadhar XXXX XXXX 1234)
+    if (lowerText.includes('aadhaar') || lowerText.includes('uidai')) {
+        console.log('[AI] Keyword-only detected Aadhar Card');
+        return {
+            document_type: 'Aadhar Card',
+            smart_label: 'Aadhar Card',
+            compliance_flags: [],
+            risk_level: 'low',
+            extracted_data: { document_type: 'Aadhar Card', confidence: 0.95 }
+        };
+    }
+    if (lowerText.includes('permanent account number') || lowerText.includes('income tax department')) {
+        console.log('[AI] Keyword-only detected PAN Card');
+        return {
+            document_type: 'PAN Card',
+            smart_label: 'PAN Card',
+            compliance_flags: [],
+            risk_level: 'low',
+            extracted_data: { document_type: 'PAN Card', confidence: 0.95 }
+        };
+    }
+
     // DIAGNOSTIC LOGS
     console.log(`[AI-DIAGNOSTIC] Gemini Key: ${geminiApiKey ? geminiApiKey.substring(0, 10) + '...' : 'MISSING'}`);
     console.log(`[AI-DIAGNOSTIC] OpenAI Key: ${openaiApiKey ? openaiApiKey.substring(0, 10) + '...' : 'MISSING'}`);

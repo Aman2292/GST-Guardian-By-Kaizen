@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadDocument, getDocuments, deleteDocument, verifyDocument, verifyDocumentL2 } = require('../controllers/documentController');
+const { uploadDocument, uploadBulkDocuments, getDocuments, deleteDocument, verifyDocument, verifyDocumentL2 } = require('../controllers/documentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { isFirmAdmin } = require('../middleware/roleCheck');
 
@@ -30,6 +30,7 @@ const upload = multer({
 router.use(authMiddleware);
 
 router.post('/upload', upload.single('file'), uploadDocument);
+router.post('/upload-bulk', upload.array('files', 20), uploadBulkDocuments);
 router.get('/', getDocuments);
 router.patch('/:id/verify', verifyDocument);
 router.patch('/:id/verify-l2', isFirmAdmin, verifyDocumentL2);

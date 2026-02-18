@@ -29,7 +29,7 @@ const FirmReports = () => {
         <div className="min-h-screen bg-surface-page font-body text-neutral-900 flex">
             <Sidebar />
 
-            <div className="flex-1 ml-64 transition-all duration-300">
+            <div className="flex-1 sidebar-content">
                 <header className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-40 px-8 flex justify-between items-center">
                     <h1 className="text-xl font-bold font-heading text-neutral-800 flex items-center gap-2">
                         <FaFileInvoice className="text-primary-500" /> Reports & Analytics

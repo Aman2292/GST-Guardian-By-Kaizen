@@ -11,7 +11,14 @@ const DocumentSchema = new mongoose.Schema({
     fileType: String,
     fileSize: Number,
 
-    category: { type: String, enum: ['Purchase Invoice', 'Sale Invoice', 'Bank Statement', 'Form 16', 'GST Notice', 'Other', 'Unclassified'], default: 'Unclassified' },
+    category: {
+        type: String,
+        enum: [
+            'Purchase Invoice', 'Sale Invoice', 'Bank Statement', 'Form 16', 'GST Notice',
+            'Identity Proof', 'Business Proof', 'PAN Card', 'Aadhar Card', 'Other', 'Unclassified'
+        ],
+        default: 'Unclassified'
+    },
     smartLabel: String, // AI-generated readable description
 
     extractedData: {
@@ -25,6 +32,7 @@ const DocumentSchema = new mongoose.Schema({
         supplierName: String,
         supplierGstin: String,
         recipientName: String,
+        recipientGstin: String,
         recipientGstin: String,
         taxableValue: Number,
         cgstAmount: Number,
@@ -42,6 +50,14 @@ const DocumentSchema = new mongoose.Schema({
         currency: String,
         exchangeRate: Number,
         originalTotalAmount: Number
+    },
+
+    // AI Analysis for Bank Statements
+    analysisResult: {
+        spendingTrend: [{ month: String, amount: Number }],
+        anomalies: [{ date: String, description: String, amount: Number, severity: String }],
+        categories: [{ name: String, amount: Number, gstInput: String, color: String }],
+        summary: String
     },
 
     complianceFlags: [

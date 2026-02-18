@@ -67,17 +67,15 @@ const generateDeadlinesForClient = async (client) => {
         status: 'pending'
     });
 
-    if (deadlinesToInsert.length > 0) {
-        // Clear existing for this period to avoid dupes during re-seeding
-        await Deadline.deleteMany({
-            clientId: client._id,
-            month: 2,
-            year: 2026
-        });
-
-        await Deadline.insertMany(deadlinesToInsert);
-        console.log(`Generated ${deadlinesToInsert.length} Feb 2026 deadlines for client ${client.name}`);
+    for (const d of deadlinesToInsert) {
+        await Deadline.updateOne(
+            // Match key: same client + type + month + year = unique deadline
+            { clientId: d.clientId, type: d.type, month: d.month, year: d.year },
+            { $set: d },
+            { upsert: true }
+        );
     }
+    console.log(`Upserted ${deadlinesToInsert.length} Feb 2026 deadlines for client ${client.name}`);
 };
 
 module.exports = { generateDeadlinesForClient };

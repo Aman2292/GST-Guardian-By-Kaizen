@@ -58,7 +58,7 @@ const ClientDetails = () => {
     return (
         <div className="min-h-screen bg-surface-page font-body text-neutral-900 flex">
             <Sidebar />
-            <div className="flex-1 ml-64 transition-all duration-300">
+            <div className="flex-1 sidebar-content">
                 <header className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-40 px-8 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition shadow-sm">

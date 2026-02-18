@@ -219,3 +219,194 @@ exports.getDashboardStats = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+// @desc    Get documents grouped by client
+// @route   GET /api/ca/documents/grouped
+exports.getGroupedDocuments = async (req, res) => {
+    try {
+        const { month, year, clientId } = req.query;
+        const mongoose = require('mongoose');
+
+        // Build base query
+        let matchQuery = { firmId: new mongoose.Types.ObjectId(req.user.firmId) };
+
+        // Filter by specific client if provided
+        if (clientId) {
+            matchQuery.clientId = new mongoose.Types.ObjectId(clientId);
+        }
+
+        // Filter by month/year if provided
+        if (month && year) {
+            const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+            matchQuery.createdAt = { $gte: startDate, $lte: endDate };
+        }
+
+        console.log('[CA Documents Grouped] User:', JSON.stringify(req.user));
+        console.log('[CA Documents Grouped] Query:', JSON.stringify(matchQuery));
+
+        // Debug: Check raw count
+        const totalDocs = await Document.countDocuments({ firmId: req.user.firmId });
+        console.log('[CA Documents Grouped] Total docs for firm (raw find):', totalDocs);
+
+        // Aggregate documents by client
+        const grouped = await Document.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: '$clientId',
+                    documentCount: { $sum: 1 },
+                    documents: { $push: '$$ROOT' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'clientInfo'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$clientInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    client: {
+                        _id: '$clientInfo._id',
+                        name: '$clientInfo.name',
+                        businessName: '$clientInfo.clientProfile.businessName',
+                        gstin: '$clientInfo.clientProfile.gstin'
+                    },
+                    documentCount: 1,
+                    documents: 1
+                }
+            },
+            { $sort: { documentCount: -1 } }
+        ]);
+
+        console.log('[CA Documents Grouped] Found', grouped.length, 'groups');
+        res.json({ success: true, count: grouped.length, data: grouped });
+    } catch (err) {
+        console.error('[CA Documents Grouped] Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};
+
+// @desc    Get deadlines grouped by client
+// @route   GET /api/ca/deadlines/grouped
+exports.getGroupedDeadlines = async (req, res) => {
+    try {
+        const { month, year, status, sortBy } = req.query;
+        const mongoose = require('mongoose');
+
+        // Build base query
+        let matchQuery = { firmId: new mongoose.Types.ObjectId(req.user.firmId) };
+
+        // Filter by month/year if provided
+        if (month && year) {
+            matchQuery.month = parseInt(month);
+            matchQuery.year = parseInt(year);
+        }
+
+        // Filter by status
+        const now = new Date();
+        if (status === 'overdue') {
+            matchQuery.dueDate = { $lt: now };
+            matchQuery.status = { $ne: 'filed' };
+        } else if (status === 'pending') {
+            matchQuery.status = { $ne: 'filed' };
+        } else if (status === 'filed') {
+            matchQuery.status = 'filed';
+        }
+
+        console.log('[CA Deadlines Grouped] Query:', JSON.stringify(matchQuery));
+
+        // Debug: Check raw count
+        const totalDeadlines = await Deadline.countDocuments({ firmId: req.user.firmId });
+        console.log('[CA Deadlines Grouped] Total deadlines for firm (raw find):', totalDeadlines);
+
+        // Aggregate deadlines by client
+        const grouped = await Deadline.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: '$clientId',
+                    totalDeadlines: { $sum: 1 },
+                    pendingCount: {
+                        $sum: { $cond: [{ $ne: ['$status', 'filed'] }, 1, 0] }
+                    },
+                    overdueCount: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $lt: ['$dueDate', now] },
+                                        { $ne: ['$status', 'filed'] }
+                                    ]
+                                },
+                                1,
+                                0
+                            ]
+                        }
+                    },
+                    urgentCount: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $gte: ['$dueDate', now] },
+                                        { $lte: ['$dueDate', new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)] },
+                                        { $ne: ['$status', 'filed'] }
+                                    ]
+                                },
+                                1,
+                                0
+                            ]
+                        }
+                    },
+                    deadlines: { $push: '$$ROOT' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'clientInfo'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$clientInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    client: {
+                        _id: '$clientInfo._id',
+                        name: '$clientInfo.name',
+                        businessName: '$clientInfo.clientProfile.businessName',
+                        gstin: '$clientInfo.clientProfile.gstin'
+                    },
+                    totalDeadlines: 1,
+                    pendingCount: 1,
+                    overdueCount: 1,
+                    urgentCount: 1,
+                    deadlines: 1
+                }
+            },
+            { $sort: { [sortBy || 'pendingCount']: -1 } }
+        ]);
+
+        console.log('[CA Deadlines Grouped] Found', grouped.length, 'groups');
+        res.json({ success: true, count: grouped.length, data: grouped });
+    } catch (err) {
+        console.error('[CA Deadlines Grouped] Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};

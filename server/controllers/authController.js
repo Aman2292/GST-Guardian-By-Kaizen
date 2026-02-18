@@ -93,8 +93,12 @@ exports.login = async (req, res) => {
             data: {
                 firmId: user.firmId,
                 userId: user._id,
+                name: user.name,
+                email: user.email,
                 role: user.role,
                 isAdmin: user.caProfile?.isAdmin || false,
+                clientProfile: user.clientProfile,
+                phone: user.phone,
                 accessToken,
                 refreshToken
             }

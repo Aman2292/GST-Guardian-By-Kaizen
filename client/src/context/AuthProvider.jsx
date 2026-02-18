@@ -45,7 +45,11 @@ export const AuthProvider = ({ children }) => {
                     firmId: userData.firmId,
                     role: userData.role,
                     isAdmin: userData.isAdmin,
-                    name: userData.name // Assuming API returns name if we modify it, or we decode token
+                    name: userData.name,
+                    email: userData.email,
+                    phone: userData.phone,
+                    clientProfile: userData.clientProfile,
+                    caProfile: userData.caProfile
                 };
                 localStorage.setItem('user', JSON.stringify(userToStore));
                 setUser(userToStore);

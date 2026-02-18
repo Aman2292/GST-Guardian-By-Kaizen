@@ -1,0 +1,13 @@
+MongoDB Connected
+
+--- CA User: Riya CA ---
+CA ID: 6994a616a4f87d9c1756f50e
+FirmId: 6994a616a4f87d9c1756f50a (Type: object, Ctor: ObjectId)
+
+--- Documents Check ---
+Count with ObjectId(6994a616a4f87d9c1756f50a): 21
+Count with String("6994a616a4f87d9c1756f50a"): 0
+
+--- Deadlines Check ---
+Count with ObjectId(6994a616a4f87d9c1756f50a): 4
+Count with String("6994a616a4f87d9c1756f50a"): 0

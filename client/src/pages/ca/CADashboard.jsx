@@ -44,7 +44,7 @@ const CADashboard = () => {
             <Sidebar />
 
             {/* Main Content Area */}
-            <div className="flex-1 ml-64 transition-all duration-300">
+            <div className="flex-1 sidebar-content">
 
                 {/* Top Header */}
                 <header className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-40 px-8 flex items-center justify-between">

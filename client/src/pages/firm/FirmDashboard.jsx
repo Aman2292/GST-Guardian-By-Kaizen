@@ -55,6 +55,37 @@ const FirmDashboard = () => {
         fetchData();
     }, [activeTab]);
 
+    const getUrgencyStyles = (dueDate, status) => {
+        if (status === 'filed') return {
+            textColor: 'text-success-600',
+            bgColor: 'bg-success-100 text-success-700',
+            borderColor: 'border-l-success-500'
+        };
+
+        const now = new Date();
+        const due = new Date(dueDate);
+        const diffTime = due - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) return {
+            textColor: 'text-danger-600 font-bold',
+            bgColor: 'bg-danger-100 text-danger-700',
+            borderColor: 'border-l-danger-500'
+        };
+
+        if (diffDays <= 5) return {
+            textColor: 'text-warning-600 font-bold',
+            bgColor: 'bg-warning-100 text-warning-700',
+            borderColor: 'border-l-warning-400'
+        };
+
+        return {
+            textColor: 'text-neutral-600',
+            bgColor: 'bg-neutral-100 text-neutral-700',
+            borderColor: 'border-l-neutral-300'
+        };
+    };
+
     const tabs = [
         { id: 'overview', label: 'Overview', icon: FaChartPie },
         { id: 'verification', label: 'Verification Queue', icon: FaCheckCircle },
@@ -65,7 +96,7 @@ const FirmDashboard = () => {
         <div className="min-h-screen bg-surface-page font-body text-neutral-900 flex">
             <Sidebar />
 
-            <div className="flex-1 ml-64 transition-all duration-300">
+            <div className="flex-1 sidebar-content">
                 <nav className="h-16 bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-40 px-8 flex justify-between items-center">
                     <h1 className="text-xl font-bold font-heading text-neutral-800">Firm Command Center</h1>
                     <div className="flex items-center gap-4">
@@ -182,11 +213,14 @@ const FirmDashboard = () => {
                                             </thead>
                                             <tbody className="divide-y divide-neutral-100">
                                                 {deadlines.map(deadline => {
-                                                    const isOverdue = new Date(deadline.dueDate) < new Date() && deadline.status !== 'filed';
+                                                    const urgency = getUrgencyStyles(deadline.dueDate, deadline.status);
                                                     return (
                                                         <tr
                                                             key={deadline._id}
-                                                            className="hover:bg-neutral-50 transition cursor-pointer group"
+                                                            className={clsx(
+                                                                "hover:bg-neutral-50 transition cursor-pointer group border-l-4",
+                                                                urgency.borderColor
+                                                            )}
                                                             onClick={() => navigate(`/firm/clients/${deadline.clientId?._id}`)}
                                                         >
                                                             <td className="p-4 font-medium text-neutral-800 group-hover:text-primary-600 transition-colors uppercase tracking-tight">{deadline.type}</td>
@@ -194,13 +228,13 @@ const FirmDashboard = () => {
                                                                 <div className="text-sm font-bold text-neutral-900 group-hover:text-primary-600 transition-colors">{deadline.clientId?.clientProfile?.businessName || 'Unknown'}</div>
                                                                 <div className="text-[10px] text-neutral-400 font-mono mt-0.5 uppercase">{deadline.clientId?.clientProfile?.gstin}</div>
                                                             </td>
-                                                            <td className={clsx("p-4 font-mono text-sm", isOverdue ? "text-danger-600 font-bold" : "text-neutral-600")}>
+                                                            <td className={clsx("p-4 font-mono text-sm", urgency.textColor)}>
                                                                 {new Date(deadline.dueDate).toLocaleDateString()}
                                                             </td>
                                                             <td className="p-4">
                                                                 <span className={clsx(
                                                                     "px-2 py-0.5 rounded text-[10px] uppercase font-bold",
-                                                                    deadline.status === 'filed' ? "bg-success-100 text-success-700" : "bg-warning-100 text-warning-700"
+                                                                    urgency.bgColor
                                                                 )}>
                                                                     {deadline.status}
                                                                 </span>

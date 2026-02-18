@@ -3,12 +3,12 @@ import api from '../../services/api';
 import {
     FaFilePdf, FaFileImage, FaFileAlt, FaDownload, FaTrash,
     FaEye, FaCheckCircle, FaExclamationTriangle, FaTimesCircle,
-    FaShieldAlt, FaInfoCircle
+    FaShieldAlt, FaInfoCircle, FaUniversity, FaInbox
 } from 'react-icons/fa';
 import clsx from 'clsx';
 import useAuth from '../../hooks/useAuth';
 
-const DocumentList = ({ clientId, statusFilter, refreshTrigger }) => {
+const DocumentList = ({ clientId, statusFilter, category, refreshTrigger }) => {
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [previewDoc, setPreviewDoc] = useState(null);
@@ -20,6 +20,7 @@ const DocumentList = ({ clientId, statusFilter, refreshTrigger }) => {
             const params = new URLSearchParams();
             if (clientId) params.append('clientId', clientId);
             if (statusFilter) params.append('status', statusFilter);
+            if (category) params.append('category', category);
 
             const queryString = params.toString();
             if (queryString) url += `?${queryString}`;
@@ -42,7 +43,7 @@ const DocumentList = ({ clientId, statusFilter, refreshTrigger }) => {
 
     useEffect(() => {
         fetchDocuments();
-    }, [clientId, refreshTrigger]);
+    }, [clientId, refreshTrigger, category]);
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this file?')) return;

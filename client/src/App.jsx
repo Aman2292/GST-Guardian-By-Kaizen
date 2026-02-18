@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
+import { SidebarProvider } from './context/SidebarContext';
 import Login from './pages/auth/Login';
 import RegisterFirm from './pages/auth/RegisterFirm';
 import AcceptInvite from './pages/auth/AcceptInvite';
@@ -8,6 +9,7 @@ import FirmCAs from './pages/firm/FirmCAs';
 import FirmClients from './pages/firm/FirmClients';
 import FirmReports from './pages/firm/FirmReports';
 import FirmSettings from './pages/firm/FirmSettings';
+import AuditLogs from './pages/firm/AuditLogs';
 import CADetails from './pages/firm/CADetails';
 import CADashboard from './pages/ca/CADashboard';
 import ClientDetails from './pages/ca/ClientDetails';
@@ -20,47 +22,50 @@ import useAuth from './hooks/useAuth';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register-firm" element={<RegisterFirm />} />
-          <Route path="/register/ca" element={<AcceptInvite />} />
-          <Route path="/register/client" element={<AcceptInvite />} />
+    <SidebarProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register-firm" element={<RegisterFirm />} />
+            <Route path="/register/ca" element={<AcceptInvite />} />
+            <Route path="/register/client" element={<AcceptInvite />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<NavigateResolver />} />
-            {/* Client Routes - Accessible if role is client, but simplified check here or separate route group */}
-            <Route path="/client/documents" element={<ClientDocuments />} />
-            <Route path="/client/profile" element={<ClientProfile />} />
-          </Route>
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<NavigateResolver />} />
+              {/* Client Routes - Accessible if role is client, but simplified check here or separate route group */}
+              <Route path="/client/documents" element={<ClientDocuments />} />
+              <Route path="/client/profile" element={<ClientProfile />} />
+            </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['firms']} />}>
-            <Route path="/firm/dashboard" element={<FirmDashboard />} />
-            <Route path="/firm/cas" element={<FirmCAs />} />
-            <Route path="/firm/cas/:id" element={<CADetails />} />
-            <Route path="/firm/clients" element={<FirmClients />} />
-            <Route path="/firm/clients/:id" element={<ClientDetails />} />
-            <Route path="/firm/reports" element={<FirmReports />} />
-            <Route path="/firm/settings" element={<FirmSettings />} />
-          </Route>
+            <Route element={<ProtectedRoute allowedRoles={['firms']} />}>
+              <Route path="/firm/dashboard" element={<FirmDashboard />} />
+              <Route path="/firm/cas" element={<FirmCAs />} />
+              <Route path="/firm/cas/:id" element={<CADetails />} />
+              <Route path="/firm/clients" element={<FirmClients />} />
+              <Route path="/firm/clients/:id" element={<ClientDetails />} />
+              <Route path="/firm/reports" element={<FirmReports />} />
+              <Route path="/firm/audit-logs" element={<AuditLogs />} />
+              <Route path="/firm/settings" element={<FirmSettings />} />
+            </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['ca']} />}>
-            <Route path="/ca/dashboard" element={<CADashboard />} />
-            <Route path="/ca/clients" element={<CAClients />} />
-            <Route path="/ca/clients/:id" element={<ClientDetails />} />
-            <Route path="/ca/documents" element={<CADocuments />} />
-            <Route path="/ca/deadlines" element={<CADeadlines />} />
-            <Route path="/ca/settings" element={<CASettings />} />
-          </Route>
+            <Route element={<ProtectedRoute allowedRoles={['ca']} />}>
+              <Route path="/ca/dashboard" element={<CADashboard />} />
+              <Route path="/ca/clients" element={<CAClients />} />
+              <Route path="/ca/clients/:id" element={<ClientDetails />} />
+              <Route path="/ca/documents" element={<CADocuments />} />
+              <Route path="/ca/deadlines" element={<CADeadlines />} />
+              <Route path="/ca/settings" element={<CASettings />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </SidebarProvider>
   );
 }
 

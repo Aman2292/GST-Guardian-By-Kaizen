@@ -18,13 +18,21 @@ app.use(cookieParser());
 const connectDB = require('./config/db');
 connectDB();
 
+// Audit Middleware (after auth, before routes)
+const auditMiddleware = require('./middleware/auditMiddleware');
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+
+// Mount audit middleware for all routes except auth
+app.use(auditMiddleware);
+
 app.use('/api/ca', require('./routes/ca'));
 app.use('/api/documents', require('./routes/document'));
 app.use('/api/vault', require('./routes/vault'));
 app.use('/api/firm', require('./routes/firm'));
 app.use('/api/client', require('./routes/client'));
+app.use('/api/audit', require('./routes/audit'));
 
 // Make uploads folder static
 app.use('/uploads', express.static('uploads'));

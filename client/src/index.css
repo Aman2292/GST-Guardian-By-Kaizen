@@ -57,3 +57,15 @@ h1, h2, h3, h4, h5, h6 {
 .badge {
   @apply px-2.5 py-0.5 rounded-full text-xs font-semibold border;
 }
+
+/* ── Sidebar Collapse: global margin transition ─────────────────────────── */
+/* When sidebar is collapsed, shift all ml-64 content areas to ml-16 */
+body.sidebar-collapsed .sidebar-content {
+  margin-left: 4rem; /* 64px = w-16 */
+}
+
+/* Applied to the flex-1 content wrapper in every page */
+.sidebar-content {
+  margin-left: 16rem; /* 256px = w-64 */
+  transition: margin-left 300ms ease-in-out;
+}
